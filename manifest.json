@@ -3,6 +3,11 @@
   "name": "Hide YouTube Members Only Videos",
   "version": "1.0",
   "description": "Hides all members only videos on YouTube.",
+  "developer": {
+    "name": "Matt Lahti",
+    "url": "https://github.com/mattlahti"
+  },
+  "homepage_url": "https://github.com/mattlahti/hide-members-only-videos",
   "icons": {
     "48": "assets/icon-48.png",
     "96": "assets/icon-96.png"
@@ -17,5 +22,13 @@
         "hide-members-only-videos.js"
       ]
     }
-  ]
+  ],
+  "action": {
+    "default_icon": {
+      "48": "assets/icon-48.png",
+      "96": "assets/icon-96.png"
+    },
+    "default_title": "Hide Members Only Videos",
+    "default_popup": "popup/stats.html"
+  }
 }
