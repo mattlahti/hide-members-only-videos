@@ -15,8 +15,10 @@
   "content_scripts": [
     {
       "matches": [
-        "*://youtube.com/*",
-        "*://www.youtube.com/*"
+        "*://*.youtube.com/*"
+      ],
+      "exclude_matches": [
+        "*://*.music.youtube.com/*"
       ],
       "js": [
         "hide-members-only-videos.js"
@@ -30,5 +32,8 @@
     },
     "default_title": "Hide Members Only Videos",
     "default_popup": "popup/stats.html"
-  }
+  },
+  "permissions": [
+    "storage"
+  ]
 }

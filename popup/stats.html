@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Hide Members Only Videos Stats</title>
+    <link rel="stylesheet" href="stats.css">
 </head>
 <body>
-    todo:
-    <ul>
-        <li>videos hidden in the current session</li>
-        <li>total hidden videos</li>
-        <li>(breakdown by channel?)</li>
-        <li>possibly an extension version display for easier reporting of issues</li>
-    </ul>
+    <div class="header-row">
+        <div class="header-title">Statistics</div>
+        <div class="header-version">v1.0.0</div>
+    </div>
+    <div id="stats" class="stats-row">
+        <ul id="stats-list" class="stats-list"></ul>
+    </div>
+    <script src="stats.js" type="module"></script>
 </body>
 </html>
