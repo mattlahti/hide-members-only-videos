@@ -12,3 +12,9 @@ Before & after:
 Clicking the extension icon will open a popup showing the number of hidden videos broken down by the channel. Counts include hides over time and hides in the current session (if supported).
 
 <img width="247" height="119" alt="librewolf_4XVR6OQvjl" src="https://github.com/user-attachments/assets/3e8d8ebe-45e5-49df-869d-935a62e9ac0b" />
+
+### Building
+
+If you make changes to any of the source files, you will need to rebuild them to update the content script.
+
+`npm run build`
