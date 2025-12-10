@@ -7,7 +7,7 @@ module.exports = (env, argv) => {
         mode: isDevelopment ? 'development' : 'production',
         entry: './src/hide-members-only-videos.js',
         output: {
-            filename: 'contentscript.bundle.js',
+            filename: 'contentScript.bundle.js',
             path: path.resolve(__dirname, 'dist'),
         },
     };
