@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'hideCounts';
 
-const getAllHideCounts = async (storageStrategy) => (await storageStrategy.get(STORAGE_KEY))[STORAGE_KEY] || [];
+const getAllHideCounts = async (storageStrategy) => (await storageStrategy.get(STORAGE_KEY))[STORAGE_KEY] || {};
 
 const getAllSessionHideCounts = async () => await getAllHideCounts(browser.storage.session);
 

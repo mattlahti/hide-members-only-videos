@@ -3,23 +3,42 @@ import {
     getAllSessionHideCounts,
 } from '../src/storage.js';
 
-(async () => {
-    const allTotal = await getAllTotalHideCounts();
-    const allSession = await getAllSessionHideCounts();
-    const countEntries = Object.entries(allTotal);
+const statsList = document.getElementById('stats-list');
 
-    countEntries.sort((a, b) => b[1] - a[1]);
+const renderStats = (totalCounts, sessionCounts) => {
+    const entries = Object.entries(totalCounts);
 
-    const statsList = document.getElementById('stats-list');
-    countEntries.forEach(([channel, count]) => {
+    if (entries.length === 0) {
+        statsList.textContent = 'No videos hidden yet.';
+        return;
+    }
+
+    const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
+
+    for (const [channel, count] of sortedEntries) {
         const li = document.createElement('li');
-        li.textContent = `${channel}: ${count}`;
+        let text = `${channel}: ${count}`;
 
-        const sessionCount = allSession[channel] || 0;
+        const sessionCount = sessionCounts[channel];
         if (sessionCount > 0) {
-            li.textContent += ` (${sessionCount} this session)`;
+            text += ` (${sessionCount} this session)`;
         }
 
+        li.textContent = text;
         statsList.appendChild(li);
-    });
+    }
+}
+
+(async () => {
+    try {
+        const [totalCounts, sessionCounts] = await Promise.all([
+            getAllTotalHideCounts(),
+            getAllSessionHideCounts()
+        ]);
+
+        renderStats(totalCounts, sessionCounts);
+    } catch (err) {
+        console.error('Failed to load hide‑count stats:', err);
+        statsList.textContent = 'Failed to load statistics.';
+    }
 })();
