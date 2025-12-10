@@ -31,8 +31,13 @@ const incrementTotalHideCount = async channel => await incrementCount(browser.st
 const incrementSessionHideCount = async channel => await incrementCount(browser.storage.session, channel);
 
 const incrementCounts = async channel => {
-    await incrementSessionHideCount(channel);
-    await incrementTotalHideCount(channel);
+    if (browser.storage.local) {
+        await incrementTotalHideCount(channel);
+    }
+
+    if (browser.storage.session) {
+        await incrementSessionHideCount(channel);
+    }
 };
 
 export {

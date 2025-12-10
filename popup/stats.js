@@ -1,7 +1,7 @@
 import {
     getAllTotalHideCounts,
     getAllSessionHideCounts,
-} from '../storage.js';
+} from '../src/storage.js';
 
 (async () => {
     const allTotal = await getAllTotalHideCounts();

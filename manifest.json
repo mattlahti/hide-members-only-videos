@@ -24,7 +24,7 @@
         "*://*.music.youtube.com/*"
       ],
       "js": [
-        "hide-members-only-videos.js"
+        "dist/contentscript.bundle.js"
       ]
     }
   ],
