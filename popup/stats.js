@@ -8,12 +8,7 @@ import {
     const allSession = await getAllSessionHideCounts();
     const countEntries = Object.entries(allTotal);
 
-    // todo: remove this, just for testing what it looks like with hella channels
-    for (let i = 0; i < 100 - countEntries.length; i++) {
-        countEntries.push(...countEntries);
-    }
-
-    // todo: sort by count desc
+    countEntries.sort((a, b) => b[1] - a[1]);
 
     const statsList = document.getElementById('stats-list');
     countEntries.forEach(([channel, count]) => {
