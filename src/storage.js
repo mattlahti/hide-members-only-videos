@@ -13,17 +13,16 @@ const getSessionHideCountByChannel = async channel => await getHideCount(browser
 const getTotalHideCountByChannel = async channel => await getHideCount(browser.storage.local, channel);
 
 const incrementCount = async (storageStrategy, channel) => {
-    const currentCount = await getHideCount(storageStrategy, channel) || 0;
-    const newValue = currentCount + 1;
+    const allCounts = await getAllHideCounts(storageStrategy);
+    const currentCount = allCounts[channel] || 0;
     const value = {
         [STORAGE_KEY]: {
-            [channel]: newValue,
+            ...allCounts,
+            [channel]: currentCount + 1,
         },
     };
 
     await storageStrategy.set(value);
-
-    return newValue;
 };
 
 const incrementTotalHideCount = async channel => await incrementCount(browser.storage.local, channel);
