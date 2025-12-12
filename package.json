@@ -7,8 +7,8 @@
     "webpack-cli": "^6.0.1"
   },
   "scripts": {
-    "build-dev": "webpack --mode development",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "watch": "webpack --watch"
   },
   "repository": {
     "type": "git",
