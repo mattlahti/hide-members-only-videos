@@ -1,13 +1,17 @@
 import { incrementCounts } from './storage';
+import {
+    getChannelName,
+    hasMembersOnlyBadge,
+} from './video-data-extractor';
 
-const MEMBERS_ONLY_TEXT = 'Members only';
-const MEMBERS_ONLY_BADGE_CLASS = 'yt-badge-shape__text';
 const PARENT_TAGS = [
     'ytd-rich-item-renderer',
     'yt-lockup-view-model',
+    'ytd-playlist-video-renderer',
 ];
 const CONTAINER_IDS = [
     'related',
+    //todo: need more specific selector, depends on the page, so will need to key off of location...
     'content',
 ];
 
@@ -18,62 +22,62 @@ const incrementHideCounts = async channel => {
     }
 };
 
-const getChannelName = v => {
-    const name = v.querySelector(
-        'yt-content-metadata-view-model span.yt-content-metadata-view-model__metadata-text'
-    );
-
-    return name?.textContent.trim();
-}
-
-const isMembersOnly = v => {
-    return Array.from(v.querySelectorAll('.' + MEMBERS_ONLY_BADGE_CLASS))
-        .some(badge => badge.textContent.toLowerCase().includes(MEMBERS_ONLY_TEXT.toLowerCase()));
-};
-
-const removeIfMembersOnly = v => {
-    if (isMembersOnly(v)) {
-        incrementHideCounts(getChannelName(v) || 'Unknown');
+const removeIfMembersOnly = async v => {
+    if (hasMembersOnlyBadge(v)) {
+        await incrementHideCounts(getChannelName(v) || 'Unknown');
         v.remove();
     }
 };
 
-const filterMembersOnlyVideos = node => {
-    PARENT_TAGS.forEach(parentTag => {
+const filterMembersOnlyVideos = async node => {
+    for (const parentTag of PARENT_TAGS) {
         const videos = node.matches(parentTag)
             ? [node]
             : node.querySelectorAll && node.querySelectorAll(parentTag);
 
-        videos.forEach(removeIfMembersOnly);
-    });
-};
-
-const onMutation = mutation => {
-    Array.from(mutation.addedNodes)
-        .filter(node => node.nodeType === Node.ELEMENT_NODE)
-        .forEach(filterMembersOnlyVideos);
-};
-
-const clearInitialVideos = element => {
-    if (!element) {
-        return;
+        for (const v of videos) {
+            await removeIfMembersOnly(v);
+        }
     }
-
-    PARENT_TAGS.forEach(parentTag => element.querySelectorAll(parentTag).forEach(removeIfMembersOnly));
 };
 
-const init = () => {
-    const observer = new MutationObserver(mutations => mutations.forEach(onMutation));
+const onMutation = async mutation => {
+    const addedElements = Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE);
+
+    for (const element of addedElements) {
+        await filterMembersOnlyVideos(element);
+    }
+};
+
+const clearInitialVideos = async element => {
+    for (const parentTag of PARENT_TAGS) {
+        for (const v of element.querySelectorAll(parentTag)) {
+            await removeIfMembersOnly(v);
+        }
+    }
+};
+
+const init = async () => {
+    const observer = new MutationObserver(async mutations => {
+        for (const mutation of mutations) {
+            await onMutation(mutation);
+        }
+    });
     const observerOptions = {
         childList: true,
         subtree: true,
     };
 
-    CONTAINER_IDS.forEach(id => {
+    for (const id of CONTAINER_IDS) {
         const container = document.getElementById(id);
-        clearInitialVideos(container);
+
+        if (!container) {
+            continue;
+        }
+
+        await clearInitialVideos(container);
         observer.observe(container, observerOptions);
-    });
+    }
 };
 
-init();
+(async () => await init())();
