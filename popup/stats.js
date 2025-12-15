@@ -1,18 +1,27 @@
 import {
     getAllTotalHideCounts,
     getAllSessionHideCounts,
+    clearAllHideCounts,
 } from '../src/storage.js';
 
 const statsList = document.getElementById('stats-list');
+const clearButton = document.getElementById('stats-clear-button');
+
+const EMPTY_STATS_TEXT = 'No videos hidden yet.';
+
+let hasStats = false;
 
 const renderStats = (totalCounts, sessionCounts) => {
     const entries = Object.entries(totalCounts);
 
     if (entries.length === 0) {
-        statsList.textContent = 'No videos hidden yet.';
+        hasStats = false;
+        statsList.textContent = EMPTY_STATS_TEXT;
+
         return;
     }
 
+    hasStats = true;
     const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
 
     for (const [channel, count] of sortedEntries) {
@@ -27,9 +36,9 @@ const renderStats = (totalCounts, sessionCounts) => {
         li.textContent = text;
         statsList.appendChild(li);
     }
-}
+};
 
-(async () => {
+const fetchAndRenderStats = async () => {
     try {
         const [totalCounts, sessionCounts] = await Promise.all([
             getAllTotalHideCounts(),
@@ -41,4 +50,24 @@ const renderStats = (totalCounts, sessionCounts) => {
         console.error('Failed to load hide‑count stats:', err);
         statsList.textContent = 'Failed to load statistics.';
     }
+};
+
+const updateClearButtonVisibility = () => {
+    clearButton.style.display = hasStats ? 'block' : 'none';
+};
+
+const clearStats = async () => {
+    await clearAllHideCounts();
+    await fetchAndRenderStats();
+    updateClearButtonVisibility();
+};
+
+const initClearButton = () => {
+    clearButton.addEventListener('click', clearStats);
+    updateClearButtonVisibility();
+};
+
+(async () => {
+    await fetchAndRenderStats();
+    initClearButton();
 })();

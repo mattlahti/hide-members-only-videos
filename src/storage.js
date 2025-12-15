@@ -43,6 +43,24 @@ const incrementHideCounts = async channel => {
     }
 };
 
+const clearHideCount = async storageStrategy => {
+    const cleared = {
+        [HIDE_COUNTS_KEY]: {},
+    };
+
+    await storageStrategy.set(cleared);
+};
+
+const clearAllHideCounts = async () => {
+    if (browser.storage.local) {
+        await clearHideCount(browser.storage.local);
+    }
+
+    if (browser.storage.session) {
+        await clearHideCount(browser.storage.session);
+    }
+};
+
 // todo: pull from storage, add storage in settings panel in popup
 //  also, should I split this out into a separate file like settings-storage or something...?
 const getEnabledLocations = () => {
@@ -61,4 +79,5 @@ export {
     getTotalHideCountByChannel,
     incrementHideCounts,
     getEnabledLocations,
+    clearAllHideCounts,
 };
