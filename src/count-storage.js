@@ -1,3 +1,5 @@
+import { areStatsEnabled } from './settings-storage.js';
+
 const HIDE_COUNTS_KEY = 'hideCounts';
 
 const getAllHideCounts = async (storageStrategy) => (await storageStrategy.get(HIDE_COUNTS_KEY))[HIDE_COUNTS_KEY] || {};
@@ -30,11 +32,21 @@ const incrementTotalHideCount = async channel => await incrementHideCount(browse
 const incrementSessionHideCount = async channel => await incrementHideCount(browser.storage.session, channel);
 
 const incrementHideCounts = async channel => {
-    if (browser.storage.local) {
-        await incrementTotalHideCount(channel);
+    if (!browser?.storage?.local) {
+        return;
     }
 
-    if (browser.storage.session) {
+    const statsEnabled = await areStatsEnabled();
+
+    if (!statsEnabled) {
+        console.warn('Statistics are disabled, not incrementing hide count.');
+
+        return;
+    }
+
+    await incrementTotalHideCount(channel);
+
+    if (browser?.storage?.session) {
         await incrementSessionHideCount(channel);
     }
 };
