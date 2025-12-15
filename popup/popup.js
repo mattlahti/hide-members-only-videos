@@ -9,6 +9,10 @@ import {
     updateEnabledLocations,
     updateStatsEnabled,
 } from '../src/settings-storage.js';
+import {
+    getLocationPrettyName,
+    LOCATIONS,
+} from '../src/site-location.js';
 
 const statsList = document.getElementById('stats-list');
 const clearButton = document.getElementById('stats-clear-button');
@@ -94,11 +98,6 @@ const fetchAndRenderStats = async () => {
     }
 };
 
-const checkLocationsEnabled = async () => {
-    const enabledLocations = await getEnabledLocations();
-    locations.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = enabledLocations.includes(cb.value));
-};
-
 const checkStatsEnabled = async () => {
     statsEnabledElement.querySelector('input[type="checkbox"]').checked = await areStatsEnabled();
 };
@@ -145,8 +144,27 @@ const bindEventListeners = () => {
     Object.values(TAB_BUTTONS).forEach(tabButton => tabButton.addEventListener('click', onTabClick));
 };
 
+const populateLocations = async () => {
+    const enabledLocations = await getEnabledLocations();
+    const settingsLocations = document.getElementById('settings-locations');
+
+    for (let location of Object.values(LOCATIONS)) {
+        const row = document.createElement('div');
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = location;
+        input.checked = enabledLocations.includes(location);
+        label.appendChild(input);
+        label.append(getLocationPrettyName(location));
+        row.classList.add('checkbox-row');
+        row.appendChild(label);
+        settingsLocations.appendChild(row);
+    }
+};
+
 const init = async () => {
-    await checkLocationsEnabled();
+    await populateLocations();
     await checkStatsEnabled();
     await fetchAndRenderStats();
     await updateClearButtonVisibility();

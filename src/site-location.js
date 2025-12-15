@@ -5,6 +5,13 @@ const LOCATIONS = {
     CHANNEL_INDEX: 'channel-index',
 };
 
+const LOCATION_PRETTY_NAMES = {
+    [LOCATIONS.PLAYER]: 'Player',
+    [LOCATIONS.PLAYLIST]: 'Playlist',
+    [LOCATIONS.CHANNEL_INDEX]: 'Channel',
+    [LOCATIONS.HOME]: 'Home',
+};
+
 const LOCATION_PATH_MAP = {
     [LOCATIONS.PLAYER]: '/watch',
     [LOCATIONS.PLAYLIST]: '/playlist',
@@ -32,8 +39,11 @@ const getCurrentLocation = () => {
 
 const getSelector = location => LOCATION_SELECTOR_MAP[location];
 
+const getLocationPrettyName = location => LOCATION_PRETTY_NAMES[location];
+
 export {
     LOCATIONS,
     getCurrentLocation,
     getSelector,
+    getLocationPrettyName,
 };
