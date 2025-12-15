@@ -87,3 +87,11 @@ body {
     color: #ff7878;
     cursor: pointer;
 }
+
+.external-link {
+    padding-bottom: 5px;
+}
+
+.external-link > a {
+    color: #0096ff;
+}

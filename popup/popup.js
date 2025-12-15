@@ -24,13 +24,16 @@ const STATS_DISABLED_TEXT = 'Statistics are disabled - to track and view, enable
 
 const TAB_STATISTICS = 'stats-tab';
 const TAB_SETTINGS = 'settings-tab';
+const TAB_ABOUT = 'about-tab';
 const TAB_BUTTONS = {
     [TAB_STATISTICS]: document.getElementById('stats-tab'),
     [TAB_SETTINGS]: document.getElementById('settings-tab'),
+    [TAB_ABOUT]: document.getElementById('about-tab'),
 }
 const TAB_SECTIONS = {
     [TAB_STATISTICS]: document.getElementById('stats-section'),
     [TAB_SETTINGS]: document.getElementById('settings-section'),
+    [TAB_ABOUT]: document.getElementById('about-section'),
 };
 
 let activeTab = TAB_STATISTICS;
