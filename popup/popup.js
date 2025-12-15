@@ -16,8 +16,33 @@ const locations = document.getElementById('settings-locations');
 const statsEnabledElement = document.getElementById('settings-stats-enabled');
 
 const EMPTY_STATS_TEXT = 'No videos hidden yet.';
+const STATS_DISABLED_TEXT = 'Statistics are disabled - to track and view, enable them in the settings tab.';
 
+const TAB_STATISTICS = 'stats-tab';
+const TAB_SETTINGS = 'settings-tab';
+const TAB_BUTTONS = {
+    [TAB_STATISTICS]: document.getElementById('stats-tab'),
+    [TAB_SETTINGS]: document.getElementById('settings-tab'),
+}
+const TAB_SECTIONS = {
+    [TAB_STATISTICS]: document.getElementById('stats-section'),
+    [TAB_SETTINGS]: document.getElementById('settings-section'),
+};
+
+let activeTab = TAB_STATISTICS;
 let hasStats = false;
+
+const updateTabDom = () => {
+    Object.values(TAB_BUTTONS).forEach(button => button.classList.remove('tab-active'));
+    Object.values(TAB_SECTIONS).forEach(section => section.style.display = 'none');
+    TAB_BUTTONS[activeTab].classList.add('tab-active');
+    TAB_SECTIONS[activeTab].style.display = 'block';
+};
+
+const onTabClick = e => {
+    activeTab = e.target.id;
+    updateTabDom();
+};
 
 const renderStats = (totalCounts, sessionCounts) => {
     const entries = Object.entries(totalCounts);
@@ -46,7 +71,13 @@ const renderStats = (totalCounts, sessionCounts) => {
     }
 };
 
-const fetchAndRenderStats = async () => {
+const fetchAndRenderStats = async statsEnabled => {
+    if (!statsEnabled) {
+        statsList.textContent = STATS_DISABLED_TEXT;
+
+        return;
+    }
+
     try {
         const [totalCounts, sessionCounts] = await Promise.all([
             getAllTotalHideCounts(),
@@ -60,11 +91,11 @@ const fetchAndRenderStats = async () => {
     }
 };
 
-const initializeSettingFields = async () => {
-    const enabledLocations = await getEnabledLocations();
-    const statsEnabled = await areStatsEnabled();
-
+const checkLocationsEnabled = enabledLocations => {
     locations.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = enabledLocations.includes(cb.value));
+};
+
+const checkStatsEnabled = statsEnabled => {
     statsEnabledElement.querySelector('input[type="checkbox"]').checked = statsEnabled;
 };
 
@@ -97,18 +128,27 @@ const onEnabledLocationsChange = async e => {
 };
 
 const onStatsEnabledChange = async e => {
-    await updateStatsEnabled(e.target.checked);
+    const enabled = e.target.checked;
+    await updateStatsEnabled(enabled);
+    await fetchAndRenderStats(enabled);
 };
 
 const bindEventListeners = () => {
     locations.addEventListener('change', onEnabledLocationsChange);
     statsEnabledElement.addEventListener('change', onStatsEnabledChange);
     clearButton.addEventListener('click', clearStats);
+    Object.values(TAB_BUTTONS).forEach(tabButton => tabButton.addEventListener('click', onTabClick));
 };
 
-(async () => {
-    await initializeSettingFields();
-    await fetchAndRenderStats();
+const init = async () => {
+    const enabledLocations = await getEnabledLocations();
+    const statsEnabled = await areStatsEnabled();
+    checkLocationsEnabled(enabledLocations);
+    checkStatsEnabled(statsEnabled);
+    await fetchAndRenderStats(statsEnabled);
     bindEventListeners();
     updateClearButtonVisibility();
-})();
+    updateTabDom();
+};
+
+(async () => init())();
