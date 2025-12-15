@@ -37,7 +37,7 @@
       "96": "assets/icon-96.png"
     },
     "default_title": "Hide Members Only Videos",
-    "default_popup": "popup/stats.html"
+    "default_popup": "popup/popup.html"
   },
   "permissions": [
     "storage"

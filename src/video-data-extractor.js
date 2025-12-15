@@ -1,7 +1,7 @@
 import {
     getCurrentLocation,
     LOCATIONS,
-} from './site-location';
+} from './site-location.js';
 
 const MEMBERS_ONLY_TEXT = 'Members only';
 

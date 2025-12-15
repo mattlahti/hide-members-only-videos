@@ -1,10 +1,10 @@
-import { getSelector } from './site-location';
-import { incrementHideCounts } from './count-storage';
-import {getEnabledLocations, initSettings} from './settings-storage';
+import { getSelector } from './site-location.js';
+import { incrementHideCounts } from './count-storage.js';
+import {getEnabledLocations, initSettings} from './settings-storage.js';
 import {
     getChannelName,
     hasMembersOnlyBadge,
-} from './video-data-extractor';
+} from './video-data-extractor.js';
 
 let observer = null;
 

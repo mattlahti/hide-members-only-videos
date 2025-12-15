@@ -1,4 +1,4 @@
-import { LOCATIONS } from './site-location';
+import { LOCATIONS } from './site-location.js';
 
 const SETTINGS_KEY = 'settings';
 
@@ -20,17 +20,23 @@ const getDefaultSettings = () => {
 
 const getSettings = async () => (await browser.storage.local.get(SETTINGS_KEY))[SETTINGS_KEY] || null;
 
-const areSettingsValid = settings => {
-    if (!settings) {
+const areLocationsValid = locations => {
+    if (!Array.isArray(locations)) {
         return false;
     }
 
-    if (!Array.isArray(settings[ENABLED_LOCATIONS_KEY])) {
-        return false;
+    for (const location of locations) {
+        if (!Object.values(LOCATIONS).includes(location)) {
+            return false;
+        }
     }
 
-    return (settings[STATS_ENABLED_KEY] === false || settings[STATS_ENABLED_KEY] === true);
+    return true;
 };
+
+const isStatsEnabledValid = statsEnabled => statsEnabled === true || statsEnabled === false;
+
+const areSettingsValid = settings => settings && areLocationsValid(settings[ENABLED_LOCATIONS_KEY]) && isStatsEnabledValid(settings[STATS_ENABLED_KEY]);
 
 const writeDefaultSettings = async () => {
     const defaultSettings = {
@@ -58,6 +64,36 @@ const initSettings = async () => {
     return await getSettings();
 };
 
+const updateSettings = async settings => {
+    if (!areSettingsValid(settings)) {
+        console.error('Settings are not valid and will not be saved.', settings);
+
+        return;
+    }
+
+    await browser.storage.local.set({[SETTINGS_KEY]: settings});
+}
+
+const updateEnabledLocations = async enabledLocations => {
+    const existingSettings = await getSettings();
+    const updatedSettings = {
+        ...existingSettings,
+        [ENABLED_LOCATIONS_KEY]: enabledLocations,
+    };
+
+    await updateSettings(updatedSettings);
+};
+
+const updateStatsEnabled = async statsEnabled => {
+    const existingSettings = await getSettings();
+    const updatedSettings = {
+        ...existingSettings,
+        [STATS_ENABLED_KEY]: statsEnabled,
+    };
+
+    await updateSettings(updatedSettings);
+}
+
 const clearSettings = async () => await browser.storage.local.remove(SETTINGS_KEY);
 
 export {
@@ -66,4 +102,6 @@ export {
     initSettings,
     getSettings,
     writeDefaultSettings,
+    updateEnabledLocations,
+    updateStatsEnabled,
 };
