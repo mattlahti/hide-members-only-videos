@@ -19,12 +19,11 @@ const LOCATION_PATH_MAP = {
     [LOCATIONS.HOME]: '/',
 };
 
-//todo: need more specific selectors, depends on the page, so will need to key off of location...
 const LOCATION_SELECTOR_MAP = {
     [LOCATIONS.PLAYER]: '#related',
-    [LOCATIONS.HOME]: '#content',
-    [LOCATIONS.CHANNEL_INDEX]: '#content',
-    [LOCATIONS.PLAYLIST]: '#content',
+    [LOCATIONS.HOME]: '.ytd-browse[page-subtype="home"] #contents',
+    [LOCATIONS.CHANNEL_INDEX]: '.ytd-browse[page-subtype="channels"] #contents',
+    [LOCATIONS.PLAYLIST]: '.ytd-browse[page-subtype="playlist"] #contents',
 };
 
 const getCurrentLocation = () => {

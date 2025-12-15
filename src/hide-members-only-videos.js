@@ -1,18 +1,27 @@
-import { getSelector } from './site-location.js';
 import { incrementHideCounts } from './count-storage.js';
-import {getEnabledLocations, initSettings} from './settings-storage.js';
+import {
+    getEnabledLocations,
+    initSettings,
+} from './settings-storage.js';
+import {
+    getSelector,
+    LOCATIONS
+} from './site-location.js';
 import {
     getChannelName,
     hasMembersOnlyBadge,
 } from './video-data-extractor.js';
 
-let observer = null;
+let tileContainerObserver = null;
+let ytRootObserver = null;
 
 const PARENT_TAGS = [
     'ytd-rich-item-renderer',
     'yt-lockup-view-model',
     'ytd-playlist-video-renderer',
 ];
+
+// todo: clean this up... it's a mess rn lmao but tired
 
 const removeIfMembersOnly = async v => {
     if (hasMembersOnlyBadge(v)) {
@@ -62,11 +71,75 @@ const onMutations = async mutations => {
     }
 };
 
+const onYtRootMutations = async (mutations) => {
+    for (const mutation of mutations) {
+        const addedNodes = Array.from(mutation.addedNodes);
+
+        if (!addedNodes.length) {
+            continue;
+        }
+
+        for (const node of addedNodes) {
+            if (node.nodeType !== Node.ELEMENT_NODE) {
+                continue;
+            }
+
+            const unboundLocations = Object.entries(bound).filter(([_, bound]) => !bound);
+
+            if (!unboundLocations.length) {
+                ytRootObserver?.disconnect();
+
+                return;
+            }
+
+            for (const [location] of unboundLocations) {
+                const selector = getSelector(location);
+                const containerToObserve = node.matches(selector) || node.querySelector(selector);
+
+                if (containerToObserve) {
+                    await observeLocation(location, containerToObserve);
+                }
+            }
+        }
+    }
+};
+
+// todo: eventually will need to key this off of the enabled locations, not all...
+//  either that, or rely on a full-page reload for changes to the enabled locations...
+const bound = Object.fromEntries(
+    Object.values(LOCATIONS).map(k => [k, false])
+);
+
+const areAllLocationsBound = () => Object.values(bound).every(b => b === true);
+
+const observeLocation = async (location, container) => {
+    if (!container) {
+        console.warn(`No container found for location "${location}"`);
+
+        return;
+    }
+
+    const observerOptions = {
+        childList: true,
+        subtree: true,
+    };
+
+    bound[location] = true;
+
+    if (areAllLocationsBound()) {
+        ytRootObserver?.disconnect();
+    }
+
+    await clearInitialVideos(container);
+    tileContainerObserver.observe(container, observerOptions);
+};
+
 const observeLocations = async () => {
-    if (observer) {
-        observer.disconnect();
+    // todo: rethink this one, I think it should be more explicit when something is unbound (location specific?)
+    if (tileContainerObserver) {
+        tileContainerObserver.disconnect();
     } else {
-        observer = new MutationObserver(onMutations);
+        tileContainerObserver = new MutationObserver(onMutations);
     }
 
     const enabledLocations = await getEnabledLocations();
@@ -77,31 +150,33 @@ const observeLocations = async () => {
         return;
     }
 
-    const observerOptions = {
-        childList: true,
-        subtree: true,
-    };
-
     for (const location of enabledLocations) {
         const selector = getSelector(location);
         const container = document.querySelector(selector);
-
-        // todo: remove these logs after debugging...
-        if (!container) {
-            console.warn(`No container found for location "${location}"`);
-            continue;
-        }
-
-        console.log(`Starting to watch location "${location}" for selector "${selector}"`);
-
-        await clearInitialVideos(container);
-        observer.observe(container, observerOptions);
+        await observeLocation(location, container);
     }
+};
+
+const initYtRootObserver = async () => {
+    if (areAllLocationsBound()) {
+        return;
+    }
+
+    ytRootObserver = new MutationObserver(onYtRootMutations);
+    const element = document.body.querySelector('#content');
+    ytRootObserver.observe(
+        element,
+        {
+            childList: true,
+            subtree: true,
+        }
+    );
 };
 
 const init = async () => {
     await initSettings();
     await observeLocations();
+    await initYtRootObserver();
 };
 
 (async () => await init())();
