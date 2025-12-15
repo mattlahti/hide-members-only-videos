@@ -45,6 +45,7 @@ const onTabClick = e => {
 };
 
 const renderStats = (totalCounts, sessionCounts) => {
+    statsList.textContent = '';
     const entries = Object.entries(totalCounts);
 
     if (entries.length === 0) {
@@ -71,7 +72,9 @@ const renderStats = (totalCounts, sessionCounts) => {
     }
 };
 
-const fetchAndRenderStats = async statsEnabled => {
+const fetchAndRenderStats = async () => {
+    const statsEnabled = await areStatsEnabled();
+
     if (!statsEnabled) {
         statsList.textContent = STATS_DISABLED_TEXT;
 
@@ -91,22 +94,24 @@ const fetchAndRenderStats = async statsEnabled => {
     }
 };
 
-const checkLocationsEnabled = enabledLocations => {
+const checkLocationsEnabled = async () => {
+    const enabledLocations = await getEnabledLocations();
     locations.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = enabledLocations.includes(cb.value));
 };
 
-const checkStatsEnabled = statsEnabled => {
-    statsEnabledElement.querySelector('input[type="checkbox"]').checked = statsEnabled;
+const checkStatsEnabled = async () => {
+    statsEnabledElement.querySelector('input[type="checkbox"]').checked = await areStatsEnabled();
 };
 
-const updateClearButtonVisibility = () => {
-    clearButton.style.display = hasStats ? 'block' : 'none';
+const updateClearButtonVisibility = async () => {
+    const statsEnabled = await areStatsEnabled();
+    clearButton.style.display = hasStats && statsEnabled ? 'block' : 'none';
 };
 
 const clearStats = async () => {
     await clearAllHideCounts();
     await fetchAndRenderStats();
-    updateClearButtonVisibility();
+    await updateClearButtonVisibility();
 };
 
 const getEnabledLocationsFromCheckboxes = () =>
@@ -128,9 +133,9 @@ const onEnabledLocationsChange = async e => {
 };
 
 const onStatsEnabledChange = async e => {
-    const enabled = e.target.checked;
-    await updateStatsEnabled(enabled);
-    await fetchAndRenderStats(enabled);
+    await updateStatsEnabled(e.target.checked);
+    await updateClearButtonVisibility();
+    await fetchAndRenderStats();
 };
 
 const bindEventListeners = () => {
@@ -141,13 +146,11 @@ const bindEventListeners = () => {
 };
 
 const init = async () => {
-    const enabledLocations = await getEnabledLocations();
-    const statsEnabled = await areStatsEnabled();
-    checkLocationsEnabled(enabledLocations);
-    checkStatsEnabled(statsEnabled);
-    await fetchAndRenderStats(statsEnabled);
+    await checkLocationsEnabled();
+    await checkStatsEnabled();
+    await fetchAndRenderStats();
+    await updateClearButtonVisibility();
     bindEventListeners();
-    updateClearButtonVisibility();
     updateTabDom();
 };
 
