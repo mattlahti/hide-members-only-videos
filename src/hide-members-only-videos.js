@@ -1,12 +1,12 @@
 import { getSelector } from './site-location';
-import {
-    getEnabledLocations,
-    incrementHideCounts,
-} from './storage';
+import { incrementHideCounts } from './count-storage';
+import {getEnabledLocations, initSettings} from './settings-storage';
 import {
     getChannelName,
     hasMembersOnlyBadge,
 } from './video-data-extractor';
+
+let observer = null;
 
 const PARENT_TAGS = [
     'ytd-rich-item-renderer',
@@ -40,14 +40,6 @@ const filterMembersOnlyVideos = async node => {
     }
 };
 
-const onMutation = async mutation => {
-    const addedElements = Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE);
-
-    for (const element of addedElements) {
-        await filterMembersOnlyVideos(element);
-    }
-};
-
 const clearInitialVideos = async element => {
     for (const parentTag of PARENT_TAGS) {
         for (const v of element.querySelectorAll(parentTag)) {
@@ -56,18 +48,35 @@ const clearInitialVideos = async element => {
     }
 };
 
-const init = async () => {
-    const enabledLocations = getEnabledLocations();
+const onMutation = async mutation => {
+    const addedElements = Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE);
+
+    for (const element of addedElements) {
+        await filterMembersOnlyVideos(element);
+    }
+};
+
+const onMutations = async mutations => {
+    for (const mutation of mutations) {
+        await onMutation(mutation);
+    }
+};
+
+const observeLocations = async () => {
+    if (observer) {
+        observer.disconnect();
+    } else {
+        observer = new MutationObserver(onMutations);
+    }
+
+    const enabledLocations = await getEnabledLocations();
 
     if (!enabledLocations.length) {
+        console.warn('No locations to hide are enabled.');
+
         return;
     }
 
-    const observer = new MutationObserver(async mutations => {
-        for (const mutation of mutations) {
-            await onMutation(mutation);
-        }
-    });
     const observerOptions = {
         childList: true,
         subtree: true,
@@ -88,6 +97,11 @@ const init = async () => {
         await clearInitialVideos(container);
         observer.observe(container, observerOptions);
     }
+};
+
+const init = async () => {
+    await initSettings();
+    await observeLocations();
 };
 
 (async () => await init())();

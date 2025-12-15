@@ -20,7 +20,7 @@ const LOCATION_SELECTOR_MAP = {
     [LOCATIONS.PLAYLIST]: '#content',
 };
 
-const getLocation = () => {
+const getCurrentLocation = () => {
     for (const [locationKey, path] of Object.entries(LOCATION_PATH_MAP)) {
         if (window.location.pathname.startsWith(path)) {
             return locationKey;
@@ -34,6 +34,6 @@ const getSelector = location => LOCATION_SELECTOR_MAP[location];
 
 export {
     LOCATIONS,
-    getLocation,
+    getCurrentLocation,
     getSelector,
 };

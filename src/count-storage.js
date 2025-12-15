@@ -1,8 +1,4 @@
-import {LOCATIONS} from './site-location.js';
-
 const HIDE_COUNTS_KEY = 'hideCounts';
-
-const SETTINGS_KEY = 'settings';
 
 const getAllHideCounts = async (storageStrategy) => (await storageStrategy.get(HIDE_COUNTS_KEY))[HIDE_COUNTS_KEY] || {};
 
@@ -61,23 +57,11 @@ const clearAllHideCounts = async () => {
     }
 };
 
-// todo: pull from storage, add storage in settings panel in popup
-//  also, should I split this out into a separate file like settings-storage or something...?
-const getEnabledLocations = () => {
-    return [
-        LOCATIONS.PLAYER,
-        LOCATIONS.PLAYLIST,
-        LOCATIONS.CHANNEL_INDEX,
-        LOCATIONS.HOME,
-    ];
-};
-
 export {
     getAllSessionHideCounts,
     getAllTotalHideCounts,
     getSessionHideCountByChannel,
     getTotalHideCountByChannel,
     incrementHideCounts,
-    getEnabledLocations,
     clearAllHideCounts,
 };

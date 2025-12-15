@@ -2,7 +2,7 @@ import {
     getAllTotalHideCounts,
     getAllSessionHideCounts,
     clearAllHideCounts,
-} from '../src/storage.js';
+} from '../src/count-storage.js';
 
 const statsList = document.getElementById('stats-list');
 const clearButton = document.getElementById('stats-clear-button');

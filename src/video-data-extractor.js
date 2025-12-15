@@ -1,5 +1,5 @@
 import {
-    getLocation,
+    getCurrentLocation,
     LOCATIONS,
 } from './site-location';
 
@@ -8,7 +8,7 @@ const MEMBERS_ONLY_TEXT = 'Members only';
 const getTextFromElement = el => el?.textContent?.trim();
 
 const getChannelName = v => {
-    switch (getLocation()) {
+    switch (getCurrentLocation()) {
         case LOCATIONS.PLAYER:
         case LOCATIONS.HOME: {
             const span = v.querySelector('yt-content-metadata-view-model span.yt-content-metadata-view-model__metadata-text');
