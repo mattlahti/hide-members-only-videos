@@ -1,6 +1,10 @@
-const STORAGE_KEY = 'hideCounts';
+import {LOCATIONS} from './site-location.js';
 
-const getAllHideCounts = async (storageStrategy) => (await storageStrategy.get(STORAGE_KEY))[STORAGE_KEY] || {};
+const HIDE_COUNTS_KEY = 'hideCounts';
+
+const SETTINGS_KEY = 'settings';
+
+const getAllHideCounts = async (storageStrategy) => (await storageStrategy.get(HIDE_COUNTS_KEY))[HIDE_COUNTS_KEY] || {};
 
 const getAllSessionHideCounts = async () => await getAllHideCounts(browser.storage.session);
 
@@ -12,11 +16,11 @@ const getSessionHideCountByChannel = async channel => await getHideCount(browser
 
 const getTotalHideCountByChannel = async channel => await getHideCount(browser.storage.local, channel);
 
-const incrementCount = async (storageStrategy, channel) => {
+const incrementHideCount = async (storageStrategy, channel) => {
     const allCounts = await getAllHideCounts(storageStrategy);
     const currentCount = allCounts[channel] || 0;
     const value = {
-        [STORAGE_KEY]: {
+        [HIDE_COUNTS_KEY]: {
             ...allCounts,
             [channel]: currentCount + 1,
         },
@@ -25,11 +29,11 @@ const incrementCount = async (storageStrategy, channel) => {
     await storageStrategy.set(value);
 };
 
-const incrementTotalHideCount = async channel => await incrementCount(browser.storage.local, channel);
+const incrementTotalHideCount = async channel => await incrementHideCount(browser.storage.local, channel);
 
-const incrementSessionHideCount = async channel => await incrementCount(browser.storage.session, channel);
+const incrementSessionHideCount = async channel => await incrementHideCount(browser.storage.session, channel);
 
-const incrementCounts = async channel => {
+const incrementHideCounts = async channel => {
     if (browser.storage.local) {
         await incrementTotalHideCount(channel);
     }
@@ -39,10 +43,22 @@ const incrementCounts = async channel => {
     }
 };
 
+// todo: pull from storage, add storage in settings panel in popup
+//  also, should I split this out into a separate file like settings-storage or something...?
+const getEnabledLocations = () => {
+    return [
+        LOCATIONS.PLAYER,
+        LOCATIONS.PLAYLIST,
+        LOCATIONS.CHANNEL_INDEX,
+        LOCATIONS.HOME,
+    ];
+};
+
 export {
     getAllSessionHideCounts,
     getAllTotalHideCounts,
     getSessionHideCountByChannel,
     getTotalHideCountByChannel,
-    incrementCounts,
+    incrementHideCounts,
+    getEnabledLocations,
 };

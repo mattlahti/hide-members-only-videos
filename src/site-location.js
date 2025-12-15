@@ -12,7 +12,15 @@ const LOCATION_PATH_MAP = {
     [LOCATIONS.HOME]: '/',
 };
 
-function getLocation() {
+//todo: need more specific selectors, depends on the page, so will need to key off of location...
+const LOCATION_SELECTOR_MAP = {
+    [LOCATIONS.PLAYER]: '#related',
+    [LOCATIONS.HOME]: '#content',
+    [LOCATIONS.CHANNEL_INDEX]: '#content',
+    [LOCATIONS.PLAYLIST]: '#content',
+};
+
+const getLocation = () => {
     for (const [locationKey, path] of Object.entries(LOCATION_PATH_MAP)) {
         if (window.location.pathname.startsWith(path)) {
             return locationKey;
@@ -20,9 +28,12 @@ function getLocation() {
     }
 
     return null;
-}
+};
+
+const getSelector = location => LOCATION_SELECTOR_MAP[location];
 
 export {
     LOCATIONS,
     getLocation,
+    getSelector,
 };

@@ -1,4 +1,8 @@
-import { incrementCounts } from './storage';
+import { getSelector } from './site-location';
+import {
+    getEnabledLocations,
+    incrementHideCounts,
+} from './storage';
 import {
     getChannelName,
     hasMembersOnlyBadge,
@@ -9,22 +13,17 @@ const PARENT_TAGS = [
     'yt-lockup-view-model',
     'ytd-playlist-video-renderer',
 ];
-const CONTAINER_IDS = [
-    'related',
-    //todo: need more specific selector, depends on the page, so will need to key off of location...
-    'content',
-];
-
-const incrementHideCounts = async channel => {
-    try {
-        await incrementCounts(channel);
-    } catch (e) {
-    }
-};
 
 const removeIfMembersOnly = async v => {
     if (hasMembersOnlyBadge(v)) {
-        await incrementHideCounts(getChannelName(v) || 'Unknown');
+        const channelName = await getChannelName(v) || 'Unknown';
+
+        try {
+            await incrementHideCounts(channelName);
+        } catch (e) {
+            console.error('Failed to increment hide count:', e);
+        }
+
         v.remove();
     }
 };
@@ -58,6 +57,12 @@ const clearInitialVideos = async element => {
 };
 
 const init = async () => {
+    const enabledLocations = getEnabledLocations();
+
+    if (!enabledLocations.length) {
+        return;
+    }
+
     const observer = new MutationObserver(async mutations => {
         for (const mutation of mutations) {
             await onMutation(mutation);
@@ -68,12 +73,17 @@ const init = async () => {
         subtree: true,
     };
 
-    for (const id of CONTAINER_IDS) {
-        const container = document.getElementById(id);
+    for (const location of enabledLocations) {
+        const selector = getSelector(location);
+        const container = document.querySelector(selector);
 
+        // todo: remove these logs after debugging...
         if (!container) {
+            console.warn(`No container found for location "${location}"`);
             continue;
         }
+
+        console.log(`Starting to watch location "${location}" for selector "${selector}"`);
 
         await clearInitialVideos(container);
         observer.observe(container, observerOptions);
