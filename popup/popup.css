@@ -86,6 +86,7 @@ body {
 .stats-clear-button {
     color: #ff7878;
     cursor: pointer;
+    padding-top: 10px;
 }
 
 .external-link {
