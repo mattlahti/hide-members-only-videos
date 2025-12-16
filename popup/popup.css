@@ -77,15 +77,29 @@ body {
     padding-bottom: 10px;
 }
 
+.section > .subsection > .subsection-title:not(:first-child) {
+    padding-top: 10px;
+}
+
 .checkbox-row {
+    accent-color: red;
     user-select: none;
     -moz-user-select: none;
 }
 
+.checkbox-row > label > span {
+    position: relative;
+    top: -1px;
+}
+
 .stats-list {
     padding-left: 10px;
-    margin-bottom: 0;
+    margin: 0;
     padding-bottom: 0;
+}
+
+.stats-list > li {
+    padding-bottom: 3px;
 }
 
 .stats-clear-button {

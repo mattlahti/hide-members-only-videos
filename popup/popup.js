@@ -203,11 +203,13 @@ const populateLocations = async () => {
         const row = document.createElement('div');
         const label = document.createElement('label');
         const input = document.createElement('input');
+        const span = document.createElement('span');
         input.type = 'checkbox';
         input.value = location;
         input.checked = enabledLocations.includes(location);
         label.appendChild(input);
-        label.append(getLocationPrettyName(location));
+        span.textContent = getLocationPrettyName(location);
+        label.append(span);
         row.classList.add('checkbox-row');
         row.appendChild(label);
         settingsLocations.appendChild(row);
