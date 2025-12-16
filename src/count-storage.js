@@ -1,79 +1,69 @@
 import { areStatsEnabled } from './settings-storage.js';
 
-const HIDE_COUNTS_KEY = 'hideCounts';
+const KEY_CHANNEL_HIDE_COUNTS = 'hideCounts';
 
-const getAllHideCounts = async (storageStrategy) => (await storageStrategy.get(HIDE_COUNTS_KEY))[HIDE_COUNTS_KEY] || {};
+const KEY_LOCATION_COUNTS = 'locationHideCounts';
 
-const getAllSessionHideCounts = async () => await getAllHideCounts(browser.storage.session);
+const getStorageStrategy = () => browser.storage.local;
 
-const getAllTotalHideCounts = async () => await getAllHideCounts(browser.storage.local);
+const getAllHideCounts = async key => (await getStorageStrategy().get(key))[key] || {};
 
-const getHideCount = async (storageStrategy, channel) => (await getAllHideCounts(storageStrategy))[channel] || 0;
+const getAllChannelHideCounts = async () => await getAllHideCounts(KEY_CHANNEL_HIDE_COUNTS);
 
-const getSessionHideCountByChannel = async channel => await getHideCount(browser.storage.session, channel);
+const getAllLocationHideCounts = async () => await getAllHideCounts(KEY_LOCATION_COUNTS);
 
-const getTotalHideCountByChannel = async channel => await getHideCount(browser.storage.local, channel);
-
-const incrementHideCount = async (storageStrategy, channel) => {
-    const allCounts = await getAllHideCounts(storageStrategy);
-    const currentCount = allCounts[channel] || 0;
+const incrementCount = async (storageKey, countIdentifierKey) => {
+    const allCounts = await getAllHideCounts(storageKey);
+    const currentCount = allCounts[countIdentifierKey] || 0;
     const value = {
-        [HIDE_COUNTS_KEY]: {
+        [storageKey]: {
             ...allCounts,
-            [channel]: currentCount + 1,
+            [countIdentifierKey]: currentCount + 1,
         },
     };
 
-    await storageStrategy.set(value);
+    getStorageStrategy().set(value);
 };
 
-const incrementTotalHideCount = async channel => await incrementHideCount(browser.storage.local, channel);
+const incrementLocationHideCount = async location => incrementCount(KEY_LOCATION_COUNTS, location);
 
-const incrementSessionHideCount = async channel => await incrementHideCount(browser.storage.session, channel);
+const incrementChannelHideCount = async channel => incrementCount(KEY_CHANNEL_HIDE_COUNTS, channel);
 
-const incrementHideCounts = async channel => {
-    if (!browser?.storage?.local) {
+const incrementHideCounts = async (channel, location) => {
+    if (!getStorageStrategy()) {
         return;
     }
 
-    const statsEnabled = await areStatsEnabled();
-
-    if (!statsEnabled) {
-        console.warn('Statistics are disabled, not incrementing hide count.');
+    if (!(await areStatsEnabled())) {
+        console.warn('Statistics are disabled, not incrementing hide counts.');
 
         return;
     }
 
-    await incrementTotalHideCount(channel);
-
-    if (browser?.storage?.session) {
-        await incrementSessionHideCount(channel);
-    }
+    await Promise.all([
+        incrementChannelHideCount(channel),
+        incrementLocationHideCount(location),
+    ]);
 };
 
-const clearHideCount = async storageStrategy => {
-    const cleared = {
-        [HIDE_COUNTS_KEY]: {},
-    };
+const clearHideCount = async key => await getStorageStrategy().set({[key]: {}});
 
-    await storageStrategy.set(cleared);
-};
+const clearChannelHideCount = async () => await clearHideCount(KEY_CHANNEL_HIDE_COUNTS);
+
+const clearLocationHideCount = async () => await clearHideCount(KEY_LOCATION_COUNTS);
 
 const clearAllHideCounts = async () => {
-    if (browser.storage.local) {
-        await clearHideCount(browser.storage.local);
-    }
-
-    if (browser.storage.session) {
-        await clearHideCount(browser.storage.session);
-    }
+    await Promise.all([
+        clearChannelHideCount(),
+        clearLocationHideCount(),
+    ]);
 };
 
 export {
-    getAllSessionHideCounts,
-    getAllTotalHideCounts,
-    getSessionHideCountByChannel,
-    getTotalHideCountByChannel,
+    getAllChannelHideCounts,
+    getAllLocationHideCounts,
     incrementHideCounts,
     clearAllHideCounts,
+    clearChannelHideCount,
+    clearLocationHideCount,
 };

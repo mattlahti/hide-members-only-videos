@@ -23,7 +23,7 @@ const removeIfMembersOnly = async (v, location) => {
 
         try {
             // todo: pass location here so we can track stats separately for each location
-            await incrementHideCounts(channelName);
+            await incrementHideCounts(channelName, location);
         } catch (e) {
             console.error('Failed to increment hide count:', e);
         }
@@ -65,8 +65,6 @@ const watchForMembersOnlyVideos = async (mutations, location) => {
 const onYtRootMutations = async (mutations) => {
     const unboundLocations = await getUnboundLocations();
 
-    // todo: Ideally we would disconnect the observer at this point and then reconnect when there is an unbound location,
-    //  probably won't be too bad to add in the observer callback.
     if (unboundLocations.length === 0) {
         return;
     }
@@ -96,6 +94,7 @@ const onYtRootMutations = async (mutations) => {
     }
 };
 
+// todo: could be better replaced by listeners for both the enabled locations settings and the location observer map, fine for now though...
 const getUnboundLocations = async () => {
     const enabledLocations = await getEnabledLocations();
     const currentBoundLocations = Array.from(locationObservers.keys()).map(target => locationObservers.get(target).location);
@@ -115,7 +114,6 @@ const observe = async (target, location) => {
             console.log('disconnecting observer for location', location);
             self.disconnect();
             locationObservers.delete(target);
-            // todo: at this point, we need to check if there are any unbound nodes and then re-bind the root observer if there are
 
             return;
         }

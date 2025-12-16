@@ -6,6 +6,8 @@ const ENABLED_LOCATIONS_KEY = 'enabledLocations';
 
 const STATS_ENABLED_KEY = 'statsEnabled';
 
+const getStorageStrategy = () => browser.storage.local;
+
 const getDefaultSettings = () => {
     return {
         [ENABLED_LOCATIONS_KEY]: [
@@ -18,7 +20,7 @@ const getDefaultSettings = () => {
     }
 };
 
-const getSettings = async () => (await browser.storage.local.get(SETTINGS_KEY))[SETTINGS_KEY] || null;
+const getSettings = async () => (await getStorageStrategy().get(SETTINGS_KEY))[SETTINGS_KEY] || null;
 
 const areLocationsValid = locations => {
     if (!Array.isArray(locations)) {
@@ -43,7 +45,7 @@ const writeDefaultSettings = async () => {
         [SETTINGS_KEY]: getDefaultSettings(),
     };
 
-    await browser.storage?.local?.set(defaultSettings);
+    await getStorageStrategy().set(defaultSettings);
 
     return defaultSettings;
 };
@@ -71,7 +73,7 @@ const updateSettings = async settings => {
         return;
     }
 
-    await browser.storage.local.set({[SETTINGS_KEY]: settings});
+    await getStorageStrategy().set({[SETTINGS_KEY]: settings});
 }
 
 const updateEnabledLocations = async enabledLocations => {
@@ -94,7 +96,7 @@ const updateStatsEnabled = async statsEnabled => {
     await updateSettings(updatedSettings);
 }
 
-const clearSettings = async () => await browser.storage.local.remove(SETTINGS_KEY);
+const clearSettings = async () => await getStorageStrategy().remove(SETTINGS_KEY);
 
 export {
     getEnabledLocations,
