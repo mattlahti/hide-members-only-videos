@@ -3,17 +3,11 @@ import {
     getEnabledLocations,
     initSettings,
 } from './settings-storage.js';
-import {
-    getSelector,
-    LOCATIONS
-} from './site-location.js';
+import { getSelector } from './site-location.js';
 import {
     getChannelName,
     hasMembersOnlyBadge,
 } from './video-data-extractor.js';
-
-let tileContainerObserver = null;
-let ytRootObserver = null;
 
 const PARENT_TAGS = [
     'ytd-rich-item-renderer',
@@ -21,13 +15,14 @@ const PARENT_TAGS = [
     'ytd-playlist-video-renderer',
 ];
 
-// todo: clean this up... it's a mess rn lmao but tired
+const locationObservers = new Map();
 
-const removeIfMembersOnly = async v => {
+const removeIfMembersOnly = async (v, location) => {
     if (hasMembersOnlyBadge(v)) {
         const channelName = await getChannelName(v) || 'Unknown';
 
         try {
+            // todo: pass location here so we can track stats separately for each location
             await incrementHideCounts(channelName);
         } catch (e) {
             console.error('Failed to increment hide count:', e);
@@ -37,41 +32,45 @@ const removeIfMembersOnly = async v => {
     }
 };
 
-const filterMembersOnlyVideos = async node => {
+const filterMembersOnlyVideos = async (node, location) => {
     for (const parentTag of PARENT_TAGS) {
         const videos = node.matches(parentTag)
             ? [node]
             : node.querySelectorAll && node.querySelectorAll(parentTag);
 
         for (const v of videos) {
-            await removeIfMembersOnly(v);
+            await removeIfMembersOnly(v, location);
         }
     }
 };
 
-const clearInitialVideos = async element => {
+const clearInitialVideos = async (element, location) => {
     for (const parentTag of PARENT_TAGS) {
         for (const v of element.querySelectorAll(parentTag)) {
-            await removeIfMembersOnly(v);
+            await removeIfMembersOnly(v, location);
         }
     }
 };
 
-const onMutation = async mutation => {
-    const addedElements = Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE);
-
-    for (const element of addedElements) {
-        await filterMembersOnlyVideos(element);
-    }
-};
-
-const onMutations = async mutations => {
+const watchForMembersOnlyVideos = async (mutations, location) => {
     for (const mutation of mutations) {
-        await onMutation(mutation);
+        const addedElements = Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE);
+
+        for (const element of addedElements) {
+            await filterMembersOnlyVideos(element, location);
+        }
     }
 };
 
 const onYtRootMutations = async (mutations) => {
+    const unboundLocations = await getUnboundLocations();
+
+    // todo: Ideally we would disconnect the observer at this point and then reconnect when there is an unbound location,
+    //  probably won't be too bad to add in the observer callback.
+    if (unboundLocations.length === 0) {
+        return;
+    }
+
     for (const mutation of mutations) {
         const addedNodes = Array.from(mutation.addedNodes);
 
@@ -84,64 +83,54 @@ const onYtRootMutations = async (mutations) => {
                 continue;
             }
 
-            const unboundLocations = Object.entries(bound).filter(([_, bound]) => !bound);
-
-            if (!unboundLocations.length) {
-                ytRootObserver?.disconnect();
-
-                return;
-            }
-
-            for (const [location] of unboundLocations) {
+            for (const location of unboundLocations) {
                 const selector = getSelector(location);
                 const containerToObserve = node.matches(selector) || node.querySelector(selector);
 
                 if (containerToObserve) {
-                    await observeLocation(location, containerToObserve);
+                    await observe(containerToObserve, location);
+                    unboundLocations.splice(unboundLocations.indexOf(location), 1);
                 }
             }
         }
     }
 };
 
-// todo: eventually will need to key this off of the enabled locations, not all...
-//  either that, or rely on a full-page reload for changes to the enabled locations...
-const bound = Object.fromEntries(
-    Object.values(LOCATIONS).map(k => [k, false])
-);
+const getUnboundLocations = async () => {
+    const enabledLocations = await getEnabledLocations();
+    const currentBoundLocations = Array.from(locationObservers.keys()).map(target => locationObservers.get(target).location);
 
-const areAllLocationsBound = () => Object.values(bound).every(b => b === true);
+    return enabledLocations.filter(location => !currentBoundLocations.includes(location));
+};
 
-const observeLocation = async (location, container) => {
-    if (!container) {
-        console.warn(`No container found for location "${location}"`);
+const observe = async (target, location) => {
+    if (!target?.isConnected) {
+        console.error('Target for location does not exist or is not connected', location);
 
         return;
     }
 
-    const observerOptions = {
-        childList: true,
-        subtree: true,
-    };
+    const obs = new MutationObserver((mutations, self) => {
+        if (!target.isConnected) {
+            console.log('disconnecting observer for location', location);
+            self.disconnect();
+            locationObservers.delete(target);
+            // todo: at this point, we need to check if there are any unbound nodes and then re-bind the root observer if there are
 
-    bound[location] = true;
+            return;
+        }
 
-    if (areAllLocationsBound()) {
-        ytRootObserver?.disconnect();
-    }
+        watchForMembersOnlyVideos(mutations, location);
+    });
 
-    await clearInitialVideos(container);
-    tileContainerObserver.observe(container, observerOptions);
+    obs.observe(target, { childList: true, subtree: true });
+    locationObservers.set(target, { observer: obs, location: location});
+    await clearInitialVideos(target, location);
+    // todo: also remove this log
+    console.log('Bound observer for location', location);
 };
 
 const observeLocations = async () => {
-    // todo: rethink this one, I think it should be more explicit when something is unbound (location specific?)
-    if (tileContainerObserver) {
-        tileContainerObserver.disconnect();
-    } else {
-        tileContainerObserver = new MutationObserver(onMutations);
-    }
-
     const enabledLocations = await getEnabledLocations();
 
     if (!enabledLocations.length) {
@@ -153,16 +142,20 @@ const observeLocations = async () => {
     for (const location of enabledLocations) {
         const selector = getSelector(location);
         const container = document.querySelector(selector);
-        await observeLocation(location, container);
+
+        if (!container) {
+            // todo: remove this log later, expected behavior
+            console.warn('No container found for location', location);
+
+            continue;
+        }
+
+        await observe(container, location);
     }
 };
 
 const initYtRootObserver = async () => {
-    if (areAllLocationsBound()) {
-        return;
-    }
-
-    ytRootObserver = new MutationObserver(onYtRootMutations);
+    const ytRootObserver = new MutationObserver(onYtRootMutations);
     const element = document.body.querySelector('#content');
     ytRootObserver.observe(
         element,
