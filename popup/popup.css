@@ -65,7 +65,10 @@ body {
 .section > .subsection {
     padding-left: 5px;
     padding-right: 5px;
-    margin-bottom: 15px;
+}
+
+.section > .subsection:not(:last-child) {
+    margin-bottom: 20px;
 }
 
 .section > .subsection > .subsection-title {
@@ -81,6 +84,8 @@ body {
 
 .stats-list {
     padding-left: 10px;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .stats-clear-button {

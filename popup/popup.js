@@ -58,45 +58,39 @@ const onTabClick = e => {
     updateTabDom();
 };
 
-const renderChannelStats = totalCounts => {
-    channelStatsList.textContent = '';
+const renderStats = (statsListElement, statsEntries) => {
+    statsListElement.textContent = '';
 
-    if (!hasChannelStats) {
-        locationStatsList.textContent = EMPTY_STATS_TEXT;
+    if (!statsEntries.length) {
+        statsListElement.textContent = EMPTY_STATS_TEXT;
 
         return;
     }
 
-    const entries = Object.entries(totalCounts);
-    const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
-
-    for (const [channel, count] of sortedEntries) {
+    for (const [key, count] of statsEntries) {
         const li = document.createElement('li');
-        li.textContent = `${channel}: ${count}`;
-        channelStatsList.appendChild(li);
+        const keySpan = document.createElement('span');
+        const countSpan = document.createElement('span');
+        keySpan.style.fontWeight = 'bold';
+        keySpan.textContent = key;
+        countSpan.textContent = `: ${count}`;
+        li.appendChild(keySpan);
+        li.appendChild(countSpan);
+        statsListElement.appendChild(li);
     }
 };
 
-const renderLocationStats = locationCounts => {
-    locationStatsList.textContent = '';
+const getSortedStats = statsObject => Object.entries(statsObject).sort((a, b) => b[1] - a[1]);
 
-    if (!hasLocationStats) {
-        locationStatsList.textContent = EMPTY_STATS_TEXT;
+const renderChannelStats = channelStats => {
+    const sorted = getSortedStats(channelStats);
+    renderStats(channelStatsList, sorted);
+};
 
-        return;
-    }
-
-    const entries = Object.entries(locationCounts);
-
-    // todo: at this point, should I fill in the other known locations and default them to 0?
-
-    const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
-
-    for (const [location, count] of sortedEntries) {
-        const li = document.createElement('li');
-        li.textContent = `${getLocationPrettyName(location)}: ${count}`;
-        locationStatsList.appendChild(li);
-    }
+const renderLocationStats = locationStats => {
+    const sorted = getSortedStats(locationStats)
+        .map(([location, count]) => [getLocationPrettyName(location), count]);
+    renderStats(locationStatsList, sorted);
 };
 
 const fetchAndRenderStats = async () => {
@@ -205,7 +199,7 @@ const populateLocations = async () => {
     const enabledLocations = await getEnabledLocations();
     const settingsLocations = document.getElementById('settings-locations');
 
-    for (let location of Object.values(LOCATIONS)) {
+    for (const location of Object.values(LOCATIONS)) {
         const row = document.createElement('div');
         const label = document.createElement('label');
         const input = document.createElement('input');
