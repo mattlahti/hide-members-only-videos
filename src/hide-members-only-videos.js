@@ -22,7 +22,6 @@ const removeIfMembersOnly = async (v, location) => {
         const channelName = await getChannelName(v) || 'Unknown';
 
         try {
-            // todo: pass location here so we can track stats separately for each location
             await incrementHideCounts(channelName, location);
         } catch (e) {
             console.error('Failed to increment hide count:', e);
@@ -102,18 +101,19 @@ const getUnboundLocations = async () => {
     return enabledLocations.filter(location => !currentBoundLocations.includes(location));
 };
 
-const observe = async (target, location) => {
-    if (!target?.isConnected) {
-        console.error('Target for location does not exist or is not connected', location);
+const observe = async (container, location) => {
+    if (!container?.isConnected) {
+        // todo: remove this log later, expected behavior
+        console.warn('No container found for location', location);
 
         return;
     }
 
-    const obs = new MutationObserver((mutations, self) => {
-        if (!target.isConnected) {
+    const observer = new MutationObserver((mutations, self) => {
+        if (!container.isConnected) {
             console.log('disconnecting observer for location', location);
             self.disconnect();
-            locationObservers.delete(target);
+            locationObservers.delete(container);
 
             return;
         }
@@ -121,11 +121,18 @@ const observe = async (target, location) => {
         watchForMembersOnlyVideos(mutations, location);
     });
 
-    obs.observe(target, { childList: true, subtree: true });
-    locationObservers.set(target, { observer: obs, location: location});
-    await clearInitialVideos(target, location);
+    observer.observe(container, { childList: true, subtree: true });
+    locationObservers.set(container, { observer: observer, location: location});
+    await clearInitialVideos(container, location);
+
     // todo: also remove this log
     console.log('Bound observer for location', location);
+};
+
+const observeLocation = async location => {
+    const selector = getSelector(location);
+    const container = document.querySelector(selector);
+    await observe(container, location);
 };
 
 const observeLocations = async () => {
@@ -138,17 +145,7 @@ const observeLocations = async () => {
     }
 
     for (const location of enabledLocations) {
-        const selector = getSelector(location);
-        const container = document.querySelector(selector);
-
-        if (!container) {
-            // todo: remove this log later, expected behavior
-            console.warn('No container found for location', location);
-
-            continue;
-        }
-
-        await observe(container, location);
+        await observeLocation(location);
     }
 };
 
@@ -163,6 +160,39 @@ const initYtRootObserver = async () => {
         }
     );
 };
+
+const disconnectLocationObservers = disabledLocations => {
+    for (const [key, value] of locationObservers) {
+        if (!disabledLocations.includes(value.location)) {
+            continue;
+        }
+
+        value.observer.disconnect();
+        locationObservers.delete(key);
+        console.log('disconnected observer for location', value.location);
+    }
+};
+
+const connectLocationObservers = async enabledLocations => {
+    const promises = enabledLocations.map(async loc => {
+        console.log('starting to observe location', loc);
+        await observeLocation(loc);
+
+        return loc;
+    });
+
+    await Promise.all(promises);
+};
+
+browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    if (message.enabledLocations?.length) {
+        await connectLocationObservers(message.enabledLocations);
+    }
+
+    if (message.disabledLocations?.length) {
+        disconnectLocationObservers(message.disabledLocations);
+    }
+});
 
 const init = async () => {
     await initSettings();

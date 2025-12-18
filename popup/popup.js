@@ -35,7 +35,7 @@ const TAB_BUTTONS = {
     [TAB_STATISTICS]: document.getElementById('stats-tab'),
     [TAB_SETTINGS]: document.getElementById('settings-tab'),
     [TAB_ABOUT]: document.getElementById('about-tab'),
-}
+};
 const TAB_SECTIONS = {
     [TAB_STATISTICS]: document.getElementById('stats-section'),
     [TAB_SETTINGS]: document.getElementById('settings-section'),
@@ -93,11 +93,19 @@ const renderLocationStats = locationStats => {
     renderStats(locationStatsList, sorted);
 };
 
+const disableStatsSections = () => {
+    hasChannelStats = false;
+    hasLocationStats = false;
+    channelStatsList.textContent = STATS_DISABLED_TEXT;
+    locationStatsList.textContent = STATS_DISABLED_TEXT;
+    updateClearButtonVisibilities();
+};
+
 const fetchAndRenderStats = async () => {
     const statsEnabled = await areStatsEnabled();
 
     if (!statsEnabled) {
-        channelStatsList.textContent = STATS_DISABLED_TEXT;
+        disableStatsSections();
 
         return;
     }
@@ -225,3 +233,10 @@ const init = async () => {
 };
 
 (async () => init())();
+
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('message received in popup', message);
+    console.log('sender', sender);
+    console.log('sendResponse', sendResponse);
+    sendResponse({'val': 'hello from popup'});
+});
