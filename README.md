@@ -6,8 +6,8 @@ https://addons.mozilla.org/en-US/firefox/addon/hide-yt-members-only-videos
 
 Before & after:
 
-<img width="323" height="121" alt="librewolf_D7Y5Pv08J7" src="https://github.com/user-attachments/assets/b39090c2-ebb5-42e4-b972-1f83cfd07a6a" />
-<img width="319" height="130" alt="librewolf_LoyF97Gsqx" src="https://github.com/user-attachments/assets/bd247ed4-2471-4ebc-b501-14ceffb77e65" />
+<img width="323" height="121" alt="before_hiding_members_only_video" src="https://github.com/user-attachments/assets/b39090c2-ebb5-42e4-b972-1f83cfd07a6a" />
+<img width="319" height="130" alt="after_hiding_members_only_video" src="https://github.com/user-attachments/assets/bd247ed4-2471-4ebc-b501-14ceffb77e65" />
 
 ### Features
 
@@ -24,7 +24,7 @@ Before & after:
 
 Clicking the extension icon will open a popup showing the number of hidden videos broken down by the channel.
 
-todo: statistics image
+<img width="362" height="440" alt="extension_statistics" src="https://github.com/user-attachments/assets/58cbad38-1e47-4dd3-96b9-9554822f23e4" />
 
 ### Settings
 
@@ -34,7 +34,7 @@ This extension has settings where the following can be customized:
 - Whether statistics should be tracked and shown
 - Enabling debug logs
 
-todo: settings image
+<img width="358" height="538" alt="extension_settings" src="https://github.com/user-attachments/assets/a7120b57-b16c-481c-aae0-1ac777d6c44c" />
 
 ### Issues
 
