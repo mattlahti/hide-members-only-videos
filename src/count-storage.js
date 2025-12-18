@@ -1,4 +1,5 @@
-import { areStatsEnabled } from './settings-storage.js';
+import {areStatsEnabled, getExcludedChannelNames} from './settings-storage.js';
+import {debugLog} from './logger';
 
 const KEY_CHANNEL_HIDE_COUNTS = 'hideCounts';
 

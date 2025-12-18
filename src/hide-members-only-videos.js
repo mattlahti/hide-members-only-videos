@@ -1,7 +1,7 @@
 import { incrementHideCounts } from './count-storage.js';
 import { debugLog } from './logger.js';
 import {
-    getEnabledLocations,
+    getEnabledLocations, getExcludedChannelNames,
     initSettings,
 } from './settings-storage.js';
 import { getSelector } from './site-location.js';
@@ -19,17 +19,26 @@ const PARENT_TAGS = [
 const locationObservers = new Map();
 
 const removeIfMembersOnly = async (v, location) => {
-    if (hasMembersOnlyBadge(v)) {
-        const channelName = await getChannelName(v) || 'Unknown';
-
-        try {
-            await incrementHideCounts(channelName, location);
-        } catch (e) {
-            console.error('Failed to increment hide count:', e);
-        }
-
-        v.remove();
+    if (!hasMembersOnlyBadge(v)) {
+        return;
     }
+
+    const channelName = await getChannelName(v) || 'Unknown';
+    const excludedChannelNames = await getExcludedChannelNames();
+
+    if (excludedChannelNames.includes(channelName)) {
+        await debugLog(`Channel name "${channelName}" is excluded from statistics, not incrementing hide counts.`);
+
+        return;
+    }
+
+    try {
+        await incrementHideCounts(channelName, location);
+    } catch (e) {
+        console.error('Failed to increment hide count:', e);
+    }
+
+    v.remove();
 };
 
 const filterMembersOnlyVideos = async (node, location) => {

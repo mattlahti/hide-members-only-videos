@@ -8,6 +8,8 @@ const STATS_ENABLED_KEY = 'statsEnabled';
 
 const DEBUG_LOGS_ENABLED_KEY = 'debugLogsEnabled';
 
+const EXCLUDED_CHANNEL_NAMES_KEY = 'excludedChannelNames';
+
 const getStorageStrategy = () => browser.storage.local;
 
 const getDefaultSettings = () => {
@@ -59,6 +61,8 @@ const writeDefaultSettings = async () => {
 
 const getEnabledLocations = async () => (await getSettings())[ENABLED_LOCATIONS_KEY];
 
+const getExcludedChannelNames = async () => (await getSettings())[EXCLUDED_CHANNEL_NAMES_KEY] || [];
+
 const areStatsEnabled = async () => (await getSettings())[STATS_ENABLED_KEY] === true;
 
 const areDebugLogsEnabled = async () => (await getSettings())[DEBUG_LOGS_ENABLED_KEY] === true;
@@ -97,18 +101,31 @@ const updateStatsEnabled = async statsEnabled => await updateSettings(STATS_ENAB
 
 const updateDebugLogsEnabled = async debugLogsEnabled => await updateSettings(DEBUG_LOGS_ENABLED_KEY, debugLogsEnabled);
 
+const addExcludedChannelName = async channelName => {
+    const existingNames = await getExcludedChannelNames();
+    const updatedNames = [...existingNames, channelName];
+    await updateSettings(EXCLUDED_CHANNEL_NAMES_KEY, updatedNames);
+};
+
+const removeExcludedChannelName = async channelName => {
+    const existingNames = await getExcludedChannelNames();
+    const updatedNames = existingNames.filter(n => n !== channelName);
+    await updateSettings(EXCLUDED_CHANNEL_NAMES_KEY, updatedNames);
+};
+
 const clearSettings = async () => await getStorageStrategy().remove(SETTINGS_KEY);
 
 export {
     getEnabledLocations,
     areStatsEnabled,
     areDebugLogsEnabled,
+    getExcludedChannelNames,
     initSettings,
-    getSettings,
-    writeDefaultSettings,
     updateEnabledLocations,
     updateStatsEnabled,
     updateDebugLogsEnabled,
+    addExcludedChannelName,
+    removeExcludedChannelName,
     SETTINGS_KEY,
     ENABLED_LOCATIONS_KEY,
 };
