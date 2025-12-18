@@ -9,7 +9,7 @@ import {
     getEnabledLocations,
     areStatsEnabled,
     updateEnabledLocations,
-    updateStatsEnabled, updateDebugLogsEnabled, areDebugLogsEnabled,
+    updateStatsEnabled, updateDebugLogsEnabled, areDebugLogsEnabled, getExcludedChannelNames, addExcludedChannelName, removeExcludedChannelName,
 } from '../src/settings-storage.js';
 import {
     getLocationPrettyName,
@@ -24,6 +24,9 @@ const allStatsClearButton = document.getElementById('all-stats-clear-button');
 const locations = document.getElementById('settings-locations');
 const statsEnabledElement = document.getElementById('settings-stats-enabled');
 const debugLogsEnabledElement = document.getElementById('settings-debug-logs-enabled');
+const excludedChannelNamesList = document.getElementById('excluded-channel-names-list');
+const addExcludedChannelNameInput = document.getElementById('add-excluded-channel-name-input');
+const addExcludedChannelNameButton = document.getElementById('add-excluded-channel-name-button');
 
 const TEXT_STATS_ERROR = 'Failed to load statistics.';
 const EMPTY_STATS_TEXT = 'No data to display.';
@@ -84,14 +87,16 @@ const renderStats = (statsListElement, statsEntries) => {
 const getSortedStats = statsObject => Object.entries(statsObject).sort((a, b) => b[1] - a[1]);
 
 const renderChannelStats = channelStats => {
-    const sorted = getSortedStats(channelStats);
-    renderStats(channelStatsList, sorted);
+    const channelStatEntries = getSortedStats(channelStats);
+
+    renderStats(channelStatsList, channelStatEntries);
 };
 
 const renderLocationStats = locationStats => {
-    const sorted = getSortedStats(locationStats)
+    const locationStatEntries = getSortedStats(locationStats)
         .map(([location, count]) => [getLocationPrettyName(location), count]);
-    renderStats(locationStatsList, sorted);
+
+    renderStats(locationStatsList, locationStatEntries);
 };
 
 const disableStatsSections = () => {
@@ -132,20 +137,46 @@ const fetchAndRenderStats = async () => {
     }
 };
 
+const onChannelNameRemoveClick = async channelName => {
+    await removeExcludedChannelName(channelName);
+    await populateExcludedChannels(await getExcludedChannelNames());
+};
+
+const populateExcludedChannels = excludedChannelNames => {
+    excludedChannelNamesList.textContent = '';
+
+    excludedChannelNames.forEach(channelName => {
+        const li = document.createElement('li');
+        const removeButton = document.createElement('div');
+        const channelNameSpan = document.createElement('span');
+        removeButton.classList.add('excluded-channel-remove-button');
+        removeButton.textContent = '❌';
+        removeButton.addEventListener('click', async () => onChannelNameRemoveClick(channelName));
+        channelNameSpan.textContent = channelName;
+        li.classList.add('excluded-channel-name-li');
+        li.appendChild(removeButton);
+        li.appendChild(channelNameSpan);
+        excludedChannelNamesList.appendChild(li);
+    });
+};
+
 const populateSettings = async () => {
     const [
         statsEnabled,
         debugLogsEnabled,
         enabledLocations,
+        excludedChannelNames,
     ] = await Promise.all([
         areStatsEnabled(),
         areDebugLogsEnabled(),
         getEnabledLocations(),
+        getExcludedChannelNames(),
     ]);
 
     statsEnabledElement.querySelector('input[type="checkbox"]').checked = statsEnabled;
     debugLogsEnabledElement.querySelector('input[type="checkbox"]').checked = debugLogsEnabled;
     populateLocations(enabledLocations);
+    populateExcludedChannels(excludedChannelNames);
 };
 
 const getEnabledLocationsFromCheckboxes = () =>
@@ -211,6 +242,36 @@ const clearAllStats = async () => {
     await fetchAndRenderStats();
 };
 
+const saveExcludedChannelName = async excludedChannelName => {
+    addExcludedChannelNameInput.value = '';
+    await addExcludedChannelName(excludedChannelName);
+    await populateExcludedChannels(await getExcludedChannelNames());
+};
+
+const onAddExcludedChannelNameInputKeypress = async e => {
+    if (e.key !== 'Enter') {
+        return;
+    }
+
+    const excludedChannelName = addExcludedChannelNameInput.value.trim();
+
+    if (!excludedChannelName) {
+        return;
+    }
+
+    await saveExcludedChannelName(excludedChannelName);
+};
+
+const onAddExcludedChannelNameButtonClick = async () => {
+    const excludedChannelName = addExcludedChannelNameInput.value.trim();
+
+    if (!excludedChannelName) {
+        return;
+    }
+
+    await saveExcludedChannelName(excludedChannelName);
+};
+
 const bindEventListeners = () => {
     locations.addEventListener('change', onEnabledLocationsChange);
     statsEnabledElement.addEventListener('change', onStatsEnabledChange);
@@ -218,6 +279,8 @@ const bindEventListeners = () => {
     channelStatsClearButton.addEventListener('click', clearChannelStats);
     locationStatsClearButton.addEventListener('click', clearLocationStats);
     allStatsClearButton.addEventListener('click', clearAllStats);
+    addExcludedChannelNameInput.addEventListener('keypress', onAddExcludedChannelNameInputKeypress);
+    addExcludedChannelNameButton.addEventListener('click', onAddExcludedChannelNameButtonClick);
     Object.values(TAB_BUTTONS).forEach(tabButton => tabButton.addEventListener('click', onTabClick));
 };
 

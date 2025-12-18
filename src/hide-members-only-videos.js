@@ -18,19 +18,29 @@ const PARENT_TAGS = [
 
 const locationObservers = new Map();
 
+const isExcludedChannel = async channelName => {
+    const excludedChannelNames = (await getExcludedChannelNames()).map(cn => cn.toLowerCase());
+    const isExcluded = excludedChannelNames.includes(channelName.toLowerCase());
+
+    if (isExcluded) {
+        await debugLog(`Channel name "${channelName}" is excluded from statistics, not incrementing hide counts.`);
+    }
+
+    return isExcluded;
+};
+
 const removeIfMembersOnly = async (v, location) => {
     if (!hasMembersOnlyBadge(v)) {
         return;
     }
 
     const channelName = await getChannelName(v) || 'Unknown';
-    const excludedChannelNames = await getExcludedChannelNames();
 
-    if (excludedChannelNames.includes(channelName)) {
-        await debugLog(`Channel name "${channelName}" is excluded from statistics, not incrementing hide counts.`);
-
+    if (await isExcludedChannel(channelName)) {
         return;
     }
+
+    await debugLog(`Removing members only video from ${location} by channel ${channelName}`);
 
     try {
         await incrementHideCounts(channelName, location);

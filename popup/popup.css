@@ -115,3 +115,42 @@ body {
 .external-link > a {
     color: #0096ff;
 }
+
+.settings-button {
+    display: inline;
+    padding: 3px 5px 2px;
+}
+
+.settings-button:hover {
+    cursor: pointer;
+}
+
+.settings-button.disabled {
+    cursor: not-allowed;
+}
+
+.settings-text-input, .settings-button {
+    background-color: #414141;
+    border-radius: 3px;
+    border-style: solid;
+    border-width: 1px;
+    color: white;
+}
+
+.settings-text-input {
+    height: 20px;
+    padding-left: 5px;
+}
+
+.excluded-channel-remove-button {
+    display: inline;
+}
+
+.excluded-channel-remove-button:hover {
+    color: #ff7878;
+    cursor: pointer;
+}
+
+.stats-list > .excluded-channel-name-li:first-child {
+    margin-top: 10px;
+}
