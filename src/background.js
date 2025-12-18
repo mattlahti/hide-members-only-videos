@@ -1,3 +1,4 @@
+import { debugLog } from './logger.js';
 import {
     SETTINGS_KEY,
     ENABLED_LOCATIONS_KEY,
@@ -6,6 +7,7 @@ import {
 const sendMessageToTabs = async (tabs, message) => {
     for (const tab of tabs) {
         try {
+            await debugLog('Sending message to tab', tab.id, message)
             await browser.tabs.sendMessage(tab.id, message);
         } catch (e) {
             console.error('Failed to send message to tab', tab.id, e);

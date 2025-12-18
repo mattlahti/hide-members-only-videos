@@ -1,4 +1,5 @@
 import { incrementHideCounts } from './count-storage.js';
+import { debugLog } from './logger.js';
 import {
     getEnabledLocations,
     initSettings,
@@ -15,16 +16,7 @@ const PARENT_TAGS = [
     'ytd-playlist-video-renderer',
 ];
 
-const DEBUG_LOGS_ENABLED = true;
 const locationObservers = new Map();
-
-const debugLog = (...args) => {
-    if (!DEBUG_LOGS_ENABLED) {
-        return;
-    }
-
-    console.log('[Hide Members Only Videos]', ...args);
-};
 
 const removeIfMembersOnly = async (v, location) => {
     if (hasMembersOnlyBadge(v)) {
@@ -102,7 +94,6 @@ const onYtRootMutations = async (mutations) => {
     }
 };
 
-// todo: could be better replaced by listeners for both the enabled locations settings and the location observer map, fine for now though...
 const getUnboundLocations = async () => {
     const enabledLocations = await getEnabledLocations();
     const currentBoundLocations = Array.from(locationObservers.keys()).map(target => locationObservers.get(target).location);
@@ -112,28 +103,28 @@ const getUnboundLocations = async () => {
 
 const observe = async (container, location) => {
     if (!container?.isConnected) {
-        debugLog('No container found for location', location);
+        await debugLog('No container found for location', location);
 
         return;
     }
 
-    const observer = new MutationObserver((mutations, self) => {
+    const observer = new MutationObserver(async (mutations, self) => {
         if (!container.isConnected) {
-            debugLog('Disconnecting observer for location', location);
+            await debugLog('Disconnecting observer for location', location);
             self.disconnect();
             locationObservers.delete(container);
 
             return;
         }
 
-        watchForMembersOnlyVideos(mutations, location);
+        await watchForMembersOnlyVideos(mutations, location);
     });
 
     observer.observe(container, { childList: true, subtree: true });
     locationObservers.set(container, { observer: observer, location: location});
     await clearInitialVideos(container, location);
 
-    debugLog('Bound observer for location', location);
+    await debugLog('Bound observer for location', location);
 };
 
 const observeLocation = async location => {
@@ -146,7 +137,7 @@ const observeLocations = async () => {
     const enabledLocations = await getEnabledLocations();
 
     if (!enabledLocations.length) {
-        debugLog('No locations to hide are enabled.');
+        await debugLog('No locations to hide are enabled.');
 
         return;
     }
@@ -168,7 +159,7 @@ const initYtRootObserver = async () => {
     );
 };
 
-const disconnectLocationObservers = disabledLocations => {
+const disconnectLocationObservers = async disabledLocations => {
     for (const [key, value] of locationObservers) {
         if (!disabledLocations.includes(value.location)) {
             continue;
@@ -176,13 +167,13 @@ const disconnectLocationObservers = disabledLocations => {
 
         value.observer.disconnect();
         locationObservers.delete(key);
-        debugLog('Disconnected observer for', value.location);
+        await debugLog('Disconnected observer for', value.location);
     }
 };
 
 const connectLocationObservers = async enabledLocations => {
     const promises = enabledLocations.map(async loc => {
-        debugLog('Starting to observe', loc);
+        await debugLog('Starting to observe', loc);
         await observeLocation(loc);
 
         return loc;
@@ -191,13 +182,13 @@ const connectLocationObservers = async enabledLocations => {
     await Promise.all(promises);
 };
 
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+browser.runtime.onMessage.addListener(async message => {
     if (message.enabledLocations?.length) {
         await connectLocationObservers(message.enabledLocations);
     }
 
     if (message.disabledLocations?.length) {
-        disconnectLocationObservers(message.disabledLocations);
+        await disconnectLocationObservers(message.disabledLocations);
     }
 });
 

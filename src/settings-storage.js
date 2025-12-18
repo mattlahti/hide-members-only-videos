@@ -6,6 +6,8 @@ const ENABLED_LOCATIONS_KEY = 'enabledLocations';
 
 const STATS_ENABLED_KEY = 'statsEnabled';
 
+const DEBUG_LOGS_ENABLED_KEY = 'debugLogsEnabled';
+
 const getStorageStrategy = () => browser.storage.local;
 
 const getDefaultSettings = () => {
@@ -17,6 +19,7 @@ const getDefaultSettings = () => {
             LOCATIONS.HOME,
         ],
         [STATS_ENABLED_KEY]: true,
+        [DEBUG_LOGS_ENABLED_KEY]: false,
     }
 };
 
@@ -36,9 +39,13 @@ const areLocationsValid = locations => {
     return true;
 };
 
-const isStatsEnabledValid = statsEnabled => statsEnabled === true || statsEnabled === false;
+const isBoolStrict = v => v === true || v === false;
 
-const areSettingsValid = settings => settings && areLocationsValid(settings[ENABLED_LOCATIONS_KEY]) && isStatsEnabledValid(settings[STATS_ENABLED_KEY]);
+const isStatsEnabledValid = statsEnabled => isBoolStrict(statsEnabled);
+
+const isDebugLogsEnabledValid = debugLogsEnabled => isBoolStrict(debugLogsEnabled);
+
+const areSettingsValid = settings => settings && areLocationsValid(settings[ENABLED_LOCATIONS_KEY]) && isStatsEnabledValid(settings[STATS_ENABLED_KEY]) && isDebugLogsEnabledValid(settings[DEBUG_LOGS_ENABLED_KEY]);
 
 const writeDefaultSettings = async () => {
     const defaultSettings = {
@@ -54,6 +61,8 @@ const getEnabledLocations = async () => (await getSettings())[ENABLED_LOCATIONS_
 
 const areStatsEnabled = async () => (await getSettings())[STATS_ENABLED_KEY] === true;
 
+const areDebugLogsEnabled = async () => (await getSettings())[DEBUG_LOGS_ENABLED_KEY] === true;
+
 const initSettings = async () => {
     const settings = await getSettings();
 
@@ -66,46 +75,40 @@ const initSettings = async () => {
     return await getSettings();
 };
 
-const updateSettings = async settings => {
-    if (!areSettingsValid(settings)) {
-        console.error('Settings are not valid and will not be saved.', settings);
+const updateSettings = async (key, value) => {
+    const existingSettings = await getSettings();
+    const updatedSettings = {
+        ...existingSettings,
+        [key]: value,
+    };
+
+    if (!areSettingsValid(updatedSettings)) {
+        console.error('Settings are not valid and will not be saved.', updatedSettings);
 
         return;
     }
 
-    await getStorageStrategy().set({[SETTINGS_KEY]: settings});
-}
-
-const updateEnabledLocations = async enabledLocations => {
-    const existingSettings = await getSettings();
-    const updatedSettings = {
-        ...existingSettings,
-        [ENABLED_LOCATIONS_KEY]: enabledLocations,
-    };
-
-    await updateSettings(updatedSettings);
+    await getStorageStrategy().set({[SETTINGS_KEY]: updatedSettings});
 };
 
-const updateStatsEnabled = async statsEnabled => {
-    const existingSettings = await getSettings();
-    const updatedSettings = {
-        ...existingSettings,
-        [STATS_ENABLED_KEY]: statsEnabled,
-    };
+const updateEnabledLocations = async enabledLocations => await updateSettings(ENABLED_LOCATIONS_KEY, enabledLocations);
 
-    await updateSettings(updatedSettings);
-}
+const updateStatsEnabled = async statsEnabled => await updateSettings(STATS_ENABLED_KEY, statsEnabled);
+
+const updateDebugLogsEnabled = async debugLogsEnabled => await updateSettings(DEBUG_LOGS_ENABLED_KEY, debugLogsEnabled);
 
 const clearSettings = async () => await getStorageStrategy().remove(SETTINGS_KEY);
 
 export {
     getEnabledLocations,
     areStatsEnabled,
+    areDebugLogsEnabled,
     initSettings,
     getSettings,
     writeDefaultSettings,
     updateEnabledLocations,
     updateStatsEnabled,
+    updateDebugLogsEnabled,
     SETTINGS_KEY,
     ENABLED_LOCATIONS_KEY,
 };
