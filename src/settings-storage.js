@@ -22,6 +22,7 @@ const getDefaultSettings = () => {
         ],
         [STATS_ENABLED_KEY]: true,
         [DEBUG_LOGS_ENABLED_KEY]: false,
+        [EXCLUDED_CHANNEL_NAMES_KEY]: [],
     }
 };
 
