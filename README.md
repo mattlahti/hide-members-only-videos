@@ -1,20 +1,48 @@
-## Hide Members Only Videos
+## Hide Members Only Videos ![icon-32.png](assets/icon-32.png)
 
-This is a Mozilla extension to hide all members only videos from recommendations on YouTube. Includes both the homepage and sidebar recommended feed.
+This is a Mozilla extension to hide all members only video recommendations on YouTube. No build needed, just install the extension.
+
+https://addons.mozilla.org/en-US/firefox/addon/hide-yt-members-only-videos
 
 Before & after:
 
 <img width="323" height="121" alt="librewolf_D7Y5Pv08J7" src="https://github.com/user-attachments/assets/b39090c2-ebb5-42e4-b972-1f83cfd07a6a" />
 <img width="319" height="130" alt="librewolf_LoyF97Gsqx" src="https://github.com/user-attachments/assets/bd247ed4-2471-4ebc-b501-14ceffb77e65" />
 
+### Features
+
+- Toggle specific locations on the site where members only videos are hidden
+   - Homepage
+   - Recommended videos (on the right side of the player)
+   - Channel pages
+   - Playlists
+- Statistics broken down by channel of the video and what location it was hidden in
+- Ability to exclude specific channels from hiding
+- Settings to customize the extension (see below)
+
 ### Statistics
 
-Clicking the extension icon will open a popup showing the number of hidden videos broken down by the channel. Counts include hides over time and hides in the current session (if supported).
+Clicking the extension icon will open a popup showing the number of hidden videos broken down by the channel.
 
-<img width="247" height="119" alt="librewolf_4XVR6OQvjl" src="https://github.com/user-attachments/assets/3e8d8ebe-45e5-49df-869d-935a62e9ac0b" />
+todo: statistics image
 
-### Building
+### Settings
 
+This extension has settings where the following can be customized:
+- Channels that should be excluded from hiding
+- Locations on the site where videos are hidden
+- Whether statistics should be tracked and shown
+- Enabling debug logs
+
+todo: settings image
+
+### Issues
+
+Please report any issues you find on the [GitHub issues page](https://github.com/mattlahti/hide-members-only-videos/issues).
+
+### Development
+
+Contributions are welcome!
 If you make changes to any of the source files, you will need to rebuild them to update the content script.
 
-`npm run build`
+`npm run build` or `npm run watch`
