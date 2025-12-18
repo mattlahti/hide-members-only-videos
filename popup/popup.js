@@ -75,7 +75,6 @@ const renderStats = (statsListElement, statsEntries) => {
         const li = document.createElement('li');
         const keySpan = document.createElement('span');
         const countSpan = document.createElement('span');
-        keySpan.style.fontWeight = 'bold';
         keySpan.textContent = key;
         countSpan.textContent = `: ${count}`;
         li.appendChild(keySpan);
