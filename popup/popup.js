@@ -9,7 +9,7 @@ import {
     getEnabledLocations,
     areStatsEnabled,
     updateEnabledLocations,
-    updateStatsEnabled,
+    updateStatsEnabled, updateDebugLogsEnabled, areDebugLogsEnabled,
 } from '../src/settings-storage.js';
 import {
     getLocationPrettyName,
@@ -23,6 +23,7 @@ const locationStatsClearButton = document.getElementById('location-stats-clear-b
 const allStatsClearButton = document.getElementById('all-stats-clear-button');
 const locations = document.getElementById('settings-locations');
 const statsEnabledElement = document.getElementById('settings-stats-enabled');
+const debugLogsEnabledElement = document.getElementById('settings-debug-logs-enabled');
 
 const TEXT_STATS_ERROR = 'Failed to load statistics.';
 const EMPTY_STATS_TEXT = 'No data to display.';
@@ -131,8 +132,20 @@ const fetchAndRenderStats = async () => {
     }
 };
 
-const checkStatsEnabled = async () => {
-    statsEnabledElement.querySelector('input[type="checkbox"]').checked = await areStatsEnabled();
+const populateSettings = async () => {
+    const [
+        statsEnabled,
+        debugLogsEnabled,
+        enabledLocations,
+    ] = await Promise.all([
+        areStatsEnabled(),
+        areDebugLogsEnabled(),
+        getEnabledLocations(),
+    ]);
+
+    statsEnabledElement.querySelector('input[type="checkbox"]').checked = statsEnabled;
+    debugLogsEnabledElement.querySelector('input[type="checkbox"]').checked = debugLogsEnabled;
+    populateLocations(enabledLocations);
 };
 
 const getEnabledLocationsFromCheckboxes = () =>
@@ -156,6 +169,10 @@ const onEnabledLocationsChange = async e => {
 const onStatsEnabledChange = async e => {
     await updateStatsEnabled(e.target.checked);
     await fetchAndRenderStats();
+};
+
+const onDebugLogsEnabledChange = async e => {
+    await updateDebugLogsEnabled(e.target.checked);
 };
 
 const enableOrDisableButton = (button, enabled) => {
@@ -197,14 +214,14 @@ const clearAllStats = async () => {
 const bindEventListeners = () => {
     locations.addEventListener('change', onEnabledLocationsChange);
     statsEnabledElement.addEventListener('change', onStatsEnabledChange);
+    debugLogsEnabledElement.addEventListener('change', onDebugLogsEnabledChange);
     channelStatsClearButton.addEventListener('click', clearChannelStats);
     locationStatsClearButton.addEventListener('click', clearLocationStats);
     allStatsClearButton.addEventListener('click', clearAllStats);
     Object.values(TAB_BUTTONS).forEach(tabButton => tabButton.addEventListener('click', onTabClick));
 };
 
-const populateLocations = async () => {
-    const enabledLocations = await getEnabledLocations();
+const populateLocations = enabledLocations => {
     const settingsLocations = document.getElementById('settings-locations');
 
     for (const location of Object.values(LOCATIONS)) {
@@ -225,18 +242,10 @@ const populateLocations = async () => {
 };
 
 const init = async () => {
-    await populateLocations();
-    await checkStatsEnabled();
+    await populateSettings();
     await fetchAndRenderStats();
     bindEventListeners();
     updateTabDom();
 };
 
 (async () => init())();
-
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('message received in popup', message);
-    console.log('sender', sender);
-    console.log('sendResponse', sendResponse);
-    sendResponse({'val': 'hello from popup'});
-});
