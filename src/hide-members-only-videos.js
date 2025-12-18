@@ -15,7 +15,16 @@ const PARENT_TAGS = [
     'ytd-playlist-video-renderer',
 ];
 
+const DEBUG_LOGS_ENABLED = true;
 const locationObservers = new Map();
+
+const debugLog = (...args) => {
+    if (!DEBUG_LOGS_ENABLED) {
+        return;
+    }
+
+    console.log('[Hide Members Only Videos]', ...args);
+};
 
 const removeIfMembersOnly = async (v, location) => {
     if (hasMembersOnlyBadge(v)) {
@@ -103,15 +112,14 @@ const getUnboundLocations = async () => {
 
 const observe = async (container, location) => {
     if (!container?.isConnected) {
-        // todo: remove this log later, expected behavior
-        console.warn('No container found for location', location);
+        debugLog('No container found for location', location);
 
         return;
     }
 
     const observer = new MutationObserver((mutations, self) => {
         if (!container.isConnected) {
-            console.log('disconnecting observer for location', location);
+            debugLog('disconnecting observer for location', location);
             self.disconnect();
             locationObservers.delete(container);
 
@@ -125,8 +133,7 @@ const observe = async (container, location) => {
     locationObservers.set(container, { observer: observer, location: location});
     await clearInitialVideos(container, location);
 
-    // todo: also remove this log
-    console.log('Bound observer for location', location);
+    debugLog('Bound observer for location', location);
 };
 
 const observeLocation = async location => {
@@ -139,7 +146,7 @@ const observeLocations = async () => {
     const enabledLocations = await getEnabledLocations();
 
     if (!enabledLocations.length) {
-        console.warn('No locations to hide are enabled.');
+        debugLog('No locations to hide are enabled.');
 
         return;
     }
@@ -169,7 +176,7 @@ const disconnectLocationObservers = disabledLocations => {
 
         value.observer.disconnect();
         locationObservers.delete(key);
-        console.log('disconnected observer for location', value.location);
+        debugLog('Disconnected observer for location', value.location);
     }
 };
 
