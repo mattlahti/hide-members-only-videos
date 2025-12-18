@@ -1,27 +1,43 @@
+import {
+    SETTINGS_KEY,
+    ENABLED_LOCATIONS_KEY,
+} from './settings-storage.js';
+
 const sendMessageToTabs = async (tabs, message) => {
     for (const tab of tabs) {
-        await browser.tabs.sendMessage(tab.id, message);
+        try {
+            await browser.tabs.sendMessage(tab.id, message);
+        } catch (e) {
+            console.error('Failed to send message to tab', tab.id, e);
+        }
     }
+};
+
+const onEnabledLocationsChanged = async (oldValue, newValue) => {
+    const addedLocations = newValue.filter(l => !oldValue.includes(l));
+    const removedLocations = oldValue.filter(l => !newValue.includes(l));
+
+    if (!addedLocations.length && !removedLocations.length) {
+        return;
+    }
+
+    const message = {
+        enabledLocations: addedLocations,
+        disabledLocations: removedLocations,
+    };
+    const tabs = await browser.tabs.query({active: true});
+    await sendMessageToTabs(tabs, message);
+};
+
+const onSettingsChanged = async (oldValue, newValue) => {
+    await onEnabledLocationsChanged(oldValue[ENABLED_LOCATIONS_KEY], newValue[ENABLED_LOCATIONS_KEY]);
 };
 
 browser.storage.local.onChanged.addListener(async changes => {
     const changedItems = Object.keys(changes);
-    // todo: export these or just move this whole thing into the settings-storage
-    const settingsKey = 'settings';
-    const enabledLocationsKey = 'enabledLocations';
 
-    if (changedItems.includes(settingsKey)) {
-        const oldEnabledLocations = changes[settingsKey].oldValue[enabledLocationsKey];
-        const newEnabledLocations = changes[settingsKey].newValue[enabledLocationsKey];
-        const addedLocations = newEnabledLocations.filter(l => !oldEnabledLocations.includes(l));
-        const removedLocations = oldEnabledLocations.filter(l => !newEnabledLocations.includes(l));
-
-        const message = {
-            enabledLocations: addedLocations,
-            disabledLocations: removedLocations,
-        };
-        const tabs = await browser.tabs.query({currentWindow: true, active: true});
-        await sendMessageToTabs(tabs, message);
+    if (changedItems.includes(SETTINGS_KEY)) {
+        await onSettingsChanged(changes[SETTINGS_KEY].oldValue, changes[SETTINGS_KEY].newValue);
     }
 });
 

@@ -106,4 +106,6 @@ export {
     writeDefaultSettings,
     updateEnabledLocations,
     updateStatsEnabled,
+    SETTINGS_KEY,
+    ENABLED_LOCATIONS_KEY,
 };

@@ -119,7 +119,7 @@ const observe = async (container, location) => {
 
     const observer = new MutationObserver((mutations, self) => {
         if (!container.isConnected) {
-            debugLog('disconnecting observer for location', location);
+            debugLog('Disconnecting observer for location', location);
             self.disconnect();
             locationObservers.delete(container);
 
@@ -176,13 +176,13 @@ const disconnectLocationObservers = disabledLocations => {
 
         value.observer.disconnect();
         locationObservers.delete(key);
-        debugLog('Disconnected observer for location', value.location);
+        debugLog('Disconnected observer for', value.location);
     }
 };
 
 const connectLocationObservers = async enabledLocations => {
     const promises = enabledLocations.map(async loc => {
-        console.log('starting to observe location', loc);
+        debugLog('Starting to observe', loc);
         await observeLocation(loc);
 
         return loc;
