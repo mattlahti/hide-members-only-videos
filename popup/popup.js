@@ -15,6 +15,7 @@ import {
     getExcludedChannelNames,
     addExcludedChannelName,
     removeExcludedChannelName,
+    initSettings,
 } from '../src/settings-storage.js';
 import {
     getLocationPrettyName,
@@ -281,6 +282,7 @@ const populateLocations = enabledLocations => {
 };
 
 const init = async () => {
+    await initSettings();
     await populateSettings();
     await fetchAndRenderStats();
     bindEventListeners();

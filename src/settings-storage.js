@@ -1,4 +1,5 @@
 import { LOCATIONS } from './site-location.js';
+import { debugErrorLog } from './logger.js';
 
 const SETTINGS_KEY = 'settings';
 
@@ -26,7 +27,7 @@ const getDefaultSettings = () => {
     }
 };
 
-const getSettings = async () => (await getStorageStrategy().get(SETTINGS_KEY))[SETTINGS_KEY] || null;
+const getSettings = async () => (await getStorageStrategy().get(SETTINGS_KEY))[SETTINGS_KEY] || {};
 
 const areLocationsValid = locations => {
     if (!Array.isArray(locations)) {
@@ -64,9 +65,13 @@ const getEnabledLocations = async () => (await getSettings())[ENABLED_LOCATIONS_
 
 const getExcludedChannelNames = async () => (await getSettings())[EXCLUDED_CHANNEL_NAMES_KEY] || [];
 
-const areStatsEnabled = async () => (await getSettings())[STATS_ENABLED_KEY] === true;
+const getStatsEnabled = async () => (await getSettings())[STATS_ENABLED_KEY] || true;
 
-const areDebugLogsEnabled = async () => (await getSettings())[DEBUG_LOGS_ENABLED_KEY] === true;
+const getDebugLogsEnabled = async () => (await getSettings())[DEBUG_LOGS_ENABLED_KEY] || false;
+
+const areStatsEnabled = async () => await getStatsEnabled() === true;
+
+const areDebugLogsEnabled = async () => await getDebugLogsEnabled() === true;
 
 const initSettings = async () => {
     const settings = await getSettings();
@@ -88,7 +93,7 @@ const updateSettings = async (key, value) => {
     };
 
     if (!areSettingsValid(updatedSettings)) {
-        console.error('Settings are not valid and will not be saved.', updatedSettings);
+        await debugErrorLog('Settings are not valid and will not be saved.', updatedSettings);
 
         return;
     }

@@ -1,4 +1,7 @@
-import { debugLog } from './logger.js';
+import {
+    debugErrorLog,
+    debugLog,
+} from './logger.js';
 import {
     SETTINGS_KEY,
     ENABLED_LOCATIONS_KEY,
@@ -10,7 +13,7 @@ const sendMessageToTabs = async (tabs, message) => {
             await debugLog('Sending message to tab', tab.id, message)
             await browser.tabs.sendMessage(tab.id, message);
         } catch (e) {
-            console.error('Failed to send message to tab', tab.id, e);
+            await debugErrorLog('Failed to send message to tab', tab.id, e);
         }
     }
 };
@@ -32,14 +35,14 @@ const onEnabledLocationsChanged = async (oldValue, newValue) => {
 };
 
 const onSettingsChanged = async (oldValue, newValue) => {
-    await onEnabledLocationsChanged(oldValue[ENABLED_LOCATIONS_KEY], newValue[ENABLED_LOCATIONS_KEY]);
+    await onEnabledLocationsChanged(oldValue[ENABLED_LOCATIONS_KEY] || [], newValue[ENABLED_LOCATIONS_KEY] || []);
 };
 
 browser.storage.local.onChanged.addListener(async changes => {
     const changedItems = Object.keys(changes);
 
     if (changedItems.includes(SETTINGS_KEY)) {
-        await onSettingsChanged(changes[SETTINGS_KEY].oldValue, changes[SETTINGS_KEY].newValue);
+        await onSettingsChanged(changes[SETTINGS_KEY].oldValue || {}, changes[SETTINGS_KEY].newValue || {});
     }
 });
 
