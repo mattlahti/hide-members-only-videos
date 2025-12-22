@@ -9,7 +9,12 @@ import {
     getEnabledLocations,
     areStatsEnabled,
     updateEnabledLocations,
-    updateStatsEnabled, updateDebugLogsEnabled, areDebugLogsEnabled, getExcludedChannelNames, addExcludedChannelName, removeExcludedChannelName,
+    updateStatsEnabled,
+    updateDebugLogsEnabled,
+    areDebugLogsEnabled,
+    getExcludedChannelNames,
+    addExcludedChannelName,
+    removeExcludedChannelName,
 } from '../src/settings-storage.js';
 import {
     getLocationPrettyName,
@@ -32,35 +37,8 @@ const TEXT_STATS_ERROR = 'Failed to load statistics.';
 const EMPTY_STATS_TEXT = 'No data to display.';
 const STATS_DISABLED_TEXT = 'Statistics are disabled. To track and view them, enable statistics in the settings tab.';
 
-const TAB_STATISTICS = 'stats-tab';
-const TAB_SETTINGS = 'settings-tab';
-const TAB_ABOUT = 'about-tab';
-const TAB_BUTTONS = {
-    [TAB_STATISTICS]: document.getElementById('stats-tab'),
-    [TAB_SETTINGS]: document.getElementById('settings-tab'),
-    [TAB_ABOUT]: document.getElementById('about-tab'),
-};
-const TAB_SECTIONS = {
-    [TAB_STATISTICS]: document.getElementById('stats-section'),
-    [TAB_SETTINGS]: document.getElementById('settings-section'),
-    [TAB_ABOUT]: document.getElementById('about-section'),
-};
-
-let activeTab = TAB_STATISTICS;
 let hasChannelStats = false;
 let hasLocationStats = false;
-
-const updateTabDom = () => {
-    Object.values(TAB_BUTTONS).forEach(button => button.classList.remove('tab-active'));
-    Object.values(TAB_SECTIONS).forEach(section => section.style.display = 'none');
-    TAB_BUTTONS[activeTab].classList.add('tab-active');
-    TAB_SECTIONS[activeTab].style.display = 'block';
-};
-
-const onTabClick = e => {
-    activeTab = e.target.id;
-    updateTabDom();
-};
 
 const renderStats = (statsListElement, statsEntries) => {
     statsListElement.textContent = '';
@@ -280,7 +258,6 @@ const bindEventListeners = () => {
     allStatsClearButton.addEventListener('click', clearAllStats);
     addExcludedChannelNameInput.addEventListener('keypress', onAddExcludedChannelNameInputKeypress);
     addExcludedChannelNameButton.addEventListener('click', onAddExcludedChannelNameButtonClick);
-    Object.values(TAB_BUTTONS).forEach(tabButton => tabButton.addEventListener('click', onTabClick));
 };
 
 const populateLocations = enabledLocations => {
@@ -307,7 +284,6 @@ const init = async () => {
     await populateSettings();
     await fetchAndRenderStats();
     bindEventListeners();
-    updateTabDom();
 };
 
 (async () => init())();
