@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Hide YouTube Members Only Videos",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Hides all members only videos from recommendations on YouTube.",
   "developer": {
     "name": "Matt Lahti",
